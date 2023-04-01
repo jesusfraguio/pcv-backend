@@ -1,5 +1,8 @@
 package es.udc.pcv.backend.model.services;
 
+import es.udc.pcv.backend.model.entities.UserWithVolunteer;
+import es.udc.pcv.backend.model.entities.Volunteer;
+import es.udc.pcv.backend.model.entities.VolunteerDao;
 import java.util.Optional;
 
 import es.udc.pcv.backend.model.exceptions.IncorrectLoginException;
@@ -26,33 +29,39 @@ public class UserServiceImpl implements UserService {
 	
 	@Autowired
 	private UserDao userDao;
+
+	@Autowired
+	private VolunteerDao volunteerDao;
 	
 	@Override
-	public void signUp(User user) throws DuplicateInstanceException {
-		
-		if (userDao.existsByUserName(user.getUserName())) {
-			throw new DuplicateInstanceException("project.entities.user", user.getUserName());
+	public void signUp(UserWithVolunteer userWithVolunteer) throws DuplicateInstanceException {
+		User user = userWithVolunteer.getUser();
+		Volunteer volunteer = userWithVolunteer.getVolunteer();
+		if (userDao.existsByEmail(user.getEmail())) {
+			throw new DuplicateInstanceException("project.entities.user", user.getEmail());
 		}
 			
 		user.setPassword(passwordEncoder.encode(user.getPassword()));
 		user.setRole(User.RoleType.USER);
 		
-		userDao.save(user);
+		User created = userDao.save(user);
+		volunteer.setUser(created);
+		volunteerDao.save(volunteer);
 		
 	}
 
 	@Override
 	@Transactional(readOnly=true)
-	public User login(String userName, String password) throws IncorrectLoginException {
+	public User login(String email, String password) throws IncorrectLoginException {
 		
-		Optional<User> user = userDao.findByUserName(userName);
+		Optional<User> user = userDao.findByEmail(email);
 		
 		if (!user.isPresent()) {
-			throw new IncorrectLoginException(userName, password);
+			throw new IncorrectLoginException(email, password);
 		}
 		
 		if (!passwordEncoder.matches(password, user.get().getPassword())) {
-			throw new IncorrectLoginException(userName, password);
+			throw new IncorrectLoginException(email, password);
 		}
 		
 		return user.get();
@@ -66,15 +75,20 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public User updateProfile(Long id, String firstName, String lastName, String email) throws InstanceNotFoundException {
+	public UserWithVolunteer updateProfile(Long id, String name, String surname, String email) throws InstanceNotFoundException {
 		
 		User user = permissionChecker.checkUser(id);
-		
-		user.setFirstName(firstName);
-		user.setLastName(lastName);
 		user.setEmail(email);
-		
-		return user;
+
+		Optional<Volunteer> volunteerOpt = volunteerDao.findByUserId(user.getId());
+		Volunteer volunteer = null;
+		if(volunteerOpt.isPresent()){
+			volunteer = volunteerOpt.get();
+			volunteer.setName(name);
+			volunteer.setSurname(surname);
+
+		}
+		return new UserWithVolunteer(user,volunteer);
 
 	}
 
