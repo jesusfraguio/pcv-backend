@@ -1,9 +1,8 @@
 package es.udc.pcv.backend.rest.controllers;
 
-import static es.udc.pcv.backend.rest.dtos.UserConversor.toAuthenticatedUserDto;
-import static es.udc.pcv.backend.rest.dtos.UserConversor.toUser;
-import static es.udc.pcv.backend.rest.dtos.UserConversor.toUserDto;
-
+import es.udc.pcv.backend.model.entities.UserWithVolunteer;
+import es.udc.pcv.backend.model.entities.Volunteer;
+import es.udc.pcv.backend.rest.dtos.UserConversor;
 import java.net.URI;
 import java.util.Locale;
 
@@ -58,6 +57,9 @@ public class UserController {
 	
 	@Autowired
 	private UserService userService;
+
+	@Autowired
+	private UserConversor userConversor;
 	
 	@ExceptionHandler(IncorrectLoginException.class)
 	@ResponseStatus(HttpStatus.NOT_FOUND)
@@ -88,15 +90,16 @@ public class UserController {
 	public ResponseEntity<AuthenticatedUserDto> signUp(
 		@Validated({UserDto.AllValidations.class}) @RequestBody UserDto userDto) throws DuplicateInstanceException {
 		
-		User user = toUser(userDto);
-		
-		userService.signUp(user);
-		
+		User user = userConversor.toUser(userDto);
+		Volunteer volunteerData = userConversor.toVolunteer(userDto);
+		UserWithVolunteer userWithVolunteer = new UserWithVolunteer(user,volunteerData);
+		userService.signUp(userWithVolunteer);
+
 		URI location = ServletUriComponentsBuilder
 			.fromCurrentRequest().path("/{id}")
 			.buildAndExpand(user.getId()).toUri();
 	
-		return ResponseEntity.created(location).body(toAuthenticatedUserDto(generateServiceToken(user), user));
+		return ResponseEntity.created(location).body(userConversor.toAuthenticatedUserDto(generateServiceToken(user), user));
 
 	}
 	@Operation(summary = "login")
@@ -106,7 +109,7 @@ public class UserController {
 		
 		User user = userService.login(params.getUserName(), params.getPassword());
 			
-		return toAuthenticatedUserDto(generateServiceToken(user), user);
+		return userConversor.toAuthenticatedUserDto(generateServiceToken(user), user);
 		
 	}
 	
@@ -116,7 +119,7 @@ public class UserController {
 		
 		User user = userService.loginFromId(userId);
 		
-		return toAuthenticatedUserDto(serviceToken, user);
+		return userConversor.toAuthenticatedUserDto(serviceToken, user);
 		
 	}
 
@@ -128,9 +131,9 @@ public class UserController {
 		if (!id.equals(userId)) {
 			throw new PermissionException();
 		}
-		
-		return toUserDto(userService.updateProfile(id, userDto.getFirstName(), userDto.getLastName(),
-			userDto.getEmail()));
+		UserWithVolunteer userWithVolunteer = userService.updateProfile(id, userDto.getName(), userDto.getSurname(),
+				userDto.getEmail());
+		return userConversor.toUserDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer());
 		
 	}
 	
@@ -150,7 +153,7 @@ public class UserController {
 	
 	private String generateServiceToken(User user) {
 		
-		JwtInfo jwtInfo = new JwtInfo(user.getId(), user.getUserName(), user.getRole().toString());
+		JwtInfo jwtInfo = new JwtInfo(user.getId(), user.getEmail(), user.getRole().toString());
 		
 		return jwtGenerator.generate(jwtInfo);
 		

@@ -1,9 +1,16 @@
 package es.udc.pcv.backend.rest.dtos;
 
+import java.time.LocalDate;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserDto {
 	
 	public interface AllValidations {}
@@ -11,25 +18,30 @@ public class UserDto {
 	public interface UpdateValidations {}
 
 	private Long id;
-	private String userName;
+	@NotNull
+	@Size(min=1, max=60, groups={AllValidations.class, UpdateValidations.class})
 	private String password;
-	private String firstName;
-	private String lastName;
+	@NotNull
+	@Size(min=1, max=60, groups={AllValidations.class, UpdateValidations.class})
+	@Email(groups={AllValidations.class, UpdateValidations.class})
 	private String email;
 	private String role;
-
-	public UserDto() {}
-
-	public UserDto(Long id, String userName, String firstName, String lastName, String email, String role) {
-
-		this.id = id;
-		this.userName = userName != null ? userName.trim() : null;
-		this.firstName = firstName.trim();
-		this.lastName = lastName.trim();
-		this.email = email.trim();
-		this.role = role;
-		
-	}
+	@NotNull(groups={AllValidations.class})
+	@Size(min=1, max=60, groups={AllValidations.class})
+	private String name;
+	@NotNull(groups={AllValidations.class})
+	@Size(min=1, max=60, groups={AllValidations.class})
+	private String surname;
+	private String dni;
+	private LocalDate dniExpiration;
+	@NotNull(groups={AllValidations.class})
+	@Size(min=1, max=60, groups={AllValidations.class})
+	private String locality;
+	@NotNull(groups={AllValidations.class})
+	@Size(min=1, max=15, groups={AllValidations.class})
+	private String phone;
+	@NotNull(groups={AllValidations.class})
+	private LocalDate birth;
 
 	public Long getId() {
 		return id;
@@ -39,55 +51,22 @@ public class UserDto {
 		this.id = id;
 	}
 
-	@NotNull(groups={AllValidations.class})
-	@Size(min=1, max=60, groups={AllValidations.class})
-	public String getUserName() {
-		return userName;
-	}
-
-	public void setUserName(String userName) {
-		this.userName = userName.trim();
-	}
-
-	@NotNull(groups={AllValidations.class})
-	@Size(min=1, max=60, groups={AllValidations.class})
+	@Nullable
 	public String getPassword() {
 		return password;
 	}
 
-	public void setPassword(String password) {
+	public void setPassword(@Nullable String password) {
 		this.password = password;
 	}
 
-	@NotNull(groups={AllValidations.class, UpdateValidations.class})
-	@Size(min=1, max=60, groups={AllValidations.class, UpdateValidations.class})
-	public String getFirstName() {
-		return firstName;
-	}
-
-	public void setFirstName(String firstName) {
-		this.firstName = firstName.trim();
-	}
-
-	@NotNull(groups={AllValidations.class, UpdateValidations.class})
-	@Size(min=1, max=60, groups={AllValidations.class, UpdateValidations.class})
-	public String getLastName() {
-		return lastName;
-	}
-
-	public void setLastName(String lastName) {
-		this.lastName = lastName.trim();
-	}
-
-	@NotNull(groups={AllValidations.class, UpdateValidations.class})
-	@Size(min=1, max=60, groups={AllValidations.class, UpdateValidations.class})
-	@Email(groups={AllValidations.class, UpdateValidations.class})
+	@Nullable
 	public String getEmail() {
 		return email;
 	}
 
-	public void setEmail(String email) {
-		this.email = email.trim();
+	public void setEmail(@Nullable String email) {
+		this.email = email;
 	}
 
 	public String getRole() {
@@ -98,4 +77,59 @@ public class UserDto {
 		this.role = role;
 	}
 
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getSurname() {
+		return surname;
+	}
+
+	public void setSurname(String surname) {
+		this.surname = surname;
+	}
+
+	public String getDni() {
+		return dni;
+	}
+
+	public void setDni(String dni) {
+		this.dni = dni;
+	}
+
+	public LocalDate getDniExpiration() {
+		return dniExpiration;
+	}
+
+	public void setDniExpiration(LocalDate dniExpiration) {
+		this.dniExpiration = dniExpiration;
+	}
+
+	public String getLocality() {
+		return locality;
+	}
+
+	public void setLocality(String locality) {
+		this.locality = locality;
+	}
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+
+	public LocalDate getBirth() {
+		return birth;
+	}
+
+	public void setBirth(LocalDate birth) {
+		this.birth = birth;
+	}
 }
