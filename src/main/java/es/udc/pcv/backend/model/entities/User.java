@@ -11,7 +11,7 @@ import javax.persistence.Id;
 @Table(name = "\"User\"")
 public class User {
 
-	public enum RoleType {USER};
+	public enum RoleType {USER,ADMIN,REPRESENTATIVE};
 
 	private Long id;
 	private String password;

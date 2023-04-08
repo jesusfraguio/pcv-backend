@@ -57,7 +57,7 @@
                 <dataSource.url>${dataSource.baseUrl}?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=Europe/Madrid</dataSource.url>
                 <testDataSource.url>jdbc:postgresql://localhost:5433/pcvtest?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=Europe/Madrid</testDataSource.url>
                 <dataSource.createTablesScript>1-MySQLCreateTables.sql</dataSource.createTablesScript>
-                <!--<dataSource.createDataScript>2-MySQLCreateData.sql</dataSource.createDataScript>-->
+                <dataSource.createDataScript>2-MySQLCreateData.sql</dataSource.createDataScript>
             </properties>
         </profile>
     </profiles>
@@ -188,6 +188,7 @@
                         <basedir>${basedir}</basedir>
                         <includes>
                             <include>src/sql/${dataSource.createTablesScript}</include>
+                            <include>src/sql/${dataSource.createDataScript}</include>
                         </includes>
                     </fileset>
                 </configuration>
@@ -209,6 +210,7 @@
                                 <basedir>${basedir}</basedir>
                                 <includes>
                                     <include>src/sql/${dataSource.createTablesScript}</include>
+                                    <include>src/sql/${dataSource.createDataScript}</include>
                                 </includes>
                             </fileset>
                         </configuration>
