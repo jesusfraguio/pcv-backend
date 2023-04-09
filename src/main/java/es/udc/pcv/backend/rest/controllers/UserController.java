@@ -1,13 +1,12 @@
 package es.udc.pcv.backend.rest.controllers;
 
-import es.udc.pcv.backend.model.entities.UserWithVolunteer;
+import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.rest.dtos.UserConversor;
 import java.net.URI;
 import java.util.Locale;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;

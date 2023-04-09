@@ -1,6 +1,9 @@
 package es.udc.pcv.backend.model.services;
 
-import es.udc.pcv.backend.model.entities.UserWithVolunteer;
+import es.udc.pcv.backend.model.entities.Representative;
+import es.udc.pcv.backend.model.entities.RepresentativeDao;
+import es.udc.pcv.backend.model.to.UserWithRepresentative;
+import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.model.entities.VolunteerDao;
 import java.util.Optional;
@@ -32,6 +35,9 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private VolunteerDao volunteerDao;
+
+	@Autowired
+	private RepresentativeDao representativeDao;
 	
 	@Override
 	public void signUp(UserWithVolunteer userWithVolunteer) throws DuplicateInstanceException {
@@ -104,6 +110,23 @@ public class UserServiceImpl implements UserService {
 			user.setPassword(passwordEncoder.encode(newPassword));
 		}
 		
+	}
+
+	@Override
+	public Representative createRepresentative(UserWithRepresentative userWithRepresentative)
+			throws DuplicateInstanceException {
+
+		if (userDao.existsByEmail(userWithRepresentative.getEmail())) {
+			throw new DuplicateInstanceException("project.entities.user", userWithRepresentative.getEmail());
+		}
+
+		User user = new User(userWithRepresentative.getPassword(),userWithRepresentative.getEmail());
+		user.setPassword(passwordEncoder.encode(user.getPassword()));
+		user.setRole(User.RoleType.REPRESENTATIVE);
+
+		Representative representative = new Representative(user,userWithRepresentative.getName(),
+				userWithRepresentative.getSurname(),userWithRepresentative.getPhone());
+		return representativeDao.save(representative);
 	}
 
 }

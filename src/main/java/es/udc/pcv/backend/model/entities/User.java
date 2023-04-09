@@ -4,11 +4,14 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.Table;
 import javax.persistence.Id;
 
 @Entity
 @Table(name = "\"User\"")
+@Inheritance(strategy = InheritanceType.JOINED)
 public class User {
 
 	public enum RoleType {USER,ADMIN,REPRESENTATIVE};
@@ -23,6 +26,11 @@ public class User {
 	public User(String password, String email) {
 		this.password = password;
 		this.email = email;
+	}
+	public User(String password, String email, RoleType role) {
+		this.password = password;
+		this.email = email;
+		this.role = role;
 	}
 
 	@Id
