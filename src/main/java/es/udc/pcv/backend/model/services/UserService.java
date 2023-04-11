@@ -25,4 +25,6 @@ public interface UserService {
 	Representative createRepresentative(UserWithRepresentative userWithRepresentative)
 			throws DuplicateInstanceException;
 
+	void sendEmailWithToken(User user, String token);
+
 }

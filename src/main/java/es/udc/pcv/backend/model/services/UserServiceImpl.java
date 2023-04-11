@@ -6,11 +6,15 @@ import es.udc.pcv.backend.model.to.UserWithRepresentative;
 import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.model.entities.VolunteerDao;
+import java.security.SecureRandom;
 import java.util.Optional;
 
 import es.udc.pcv.backend.model.exceptions.IncorrectLoginException;
 import es.udc.pcv.backend.model.exceptions.IncorrectPasswordException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +33,9 @@ public class UserServiceImpl implements UserService {
 	
 	@Autowired
 	private BCryptPasswordEncoder passwordEncoder;
+
+	@Autowired
+	private JavaMailSender javaMailSender;
 	
 	@Autowired
 	private UserDao userDao;
@@ -38,7 +45,12 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private RepresentativeDao representativeDao;
-	
+
+	@Value("${spring.mail.username}")
+	private String originEmail;
+
+	private static final SecureRandom RANDOM = new SecureRandom();
+
 	@Override
 	public void signUp(UserWithVolunteer userWithVolunteer) throws DuplicateInstanceException {
 		User user = userWithVolunteer.getUser();
@@ -69,7 +81,7 @@ public class UserServiceImpl implements UserService {
 		if (!passwordEncoder.matches(password, user.get().getPassword())) {
 			throw new IncorrectLoginException(email, password);
 		}
-		
+
 		return user.get();
 		
 	}
@@ -120,13 +132,33 @@ public class UserServiceImpl implements UserService {
 			throw new DuplicateInstanceException("project.entities.user", userWithRepresentative.getEmail());
 		}
 
-		User user = new User(userWithRepresentative.getPassword(),userWithRepresentative.getEmail());
+		StringBuilder sb = new StringBuilder(10);
+		for (int i = 0; i < 10; i++) {
+			char randomChar = (char) (RANDOM.nextInt(95) + 32); //contraseña con caracteres printeables ASCII 32-126
+			sb.append(randomChar);
+		}
+		String randomPassword = sb.toString();
+		User user = new User(randomPassword,userWithRepresentative.getEmail());
 		user.setPassword(passwordEncoder.encode(user.getPassword()));
 		user.setRole(User.RoleType.REPRESENTATIVE);
 
 		Representative representative = new Representative(user,userWithRepresentative.getName(),
 				userWithRepresentative.getSurname(),userWithRepresentative.getPhone());
 		return representativeDao.save(representative);
+	}
+
+	@Override
+	public void sendEmailWithToken(User user, String token) {
+		SimpleMailMessage message = new SimpleMailMessage();
+		message.setFrom(originEmail);
+		String fullPath = "https://localhost:3000/users/validate/registerToken?="+token;
+		String bodyMessage = "Para darse de alta en PlataformaCoruñesaDeVoluntariado introduzca su contraseña en el siguiente enlace\n"+
+				"Este enlace tendrá una validez de 1 hora\n"+"<a href=\""+fullPath+"\">Enlace</a>"+"\n." +
+				"Si ha recibido por error este mensaje ignorélo por favor";
+		message.setTo(user.getEmail());
+		message.setSubject("Registro en Plataforma Coruñesa de Voluntariado");
+		message.setText(bodyMessage);
+		javaMailSender.send(message);
 	}
 
 }

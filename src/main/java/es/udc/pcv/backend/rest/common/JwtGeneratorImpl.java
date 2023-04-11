@@ -31,6 +31,18 @@ public class JwtGeneratorImpl implements JwtGenerator {
 	}
 
 	@Override
+	public String generateLowExpiration(JwtInfo info) {
+
+		return Jwts.builder()
+				.claim("userId", info.getUserId())
+				.claim("role", info.getRole())
+				.setExpiration(new Date(System.currentTimeMillis() + expirationMinutes*60*50))  //1.2 horas de validez
+				.signWith(SignatureAlgorithm.HS512, signKey.getBytes())
+				.compact();
+
+	}
+
+	@Override
 	public JwtInfo getInfo(String token) {
 		
 		Claims claims = Jwts.parser()
