@@ -27,4 +27,6 @@ public interface UserService {
 
 	void sendEmailWithToken(User user, String token);
 
+	User addNewPassword(Long id, String newPassword) throws InstanceNotFoundException;
+
 }

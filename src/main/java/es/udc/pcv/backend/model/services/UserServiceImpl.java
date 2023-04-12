@@ -71,7 +71,7 @@ public class UserServiceImpl implements UserService {
 	@Override
 	@Transactional(readOnly=true)
 	public User login(String email, String password) throws IncorrectLoginException {
-		
+
 		Optional<User> user = userDao.findByEmail(email);
 		
 		if (!user.isPresent()) {
@@ -151,14 +151,21 @@ public class UserServiceImpl implements UserService {
 	public void sendEmailWithToken(User user, String token) {
 		SimpleMailMessage message = new SimpleMailMessage();
 		message.setFrom(originEmail);
-		String fullPath = "https://localhost:3000/users/validate/registerToken?="+token;
-		String bodyMessage = "Para darse de alta en PlataformaCoruñesaDeVoluntariado introduzca su contraseña en el siguiente enlace\n"+
-				"Este enlace tendrá una validez de 1 hora\n"+"<a href=\""+fullPath+"\">Enlace</a>"+"\n." +
+		String fullPath = "https://localhost:3000/users/validate/registerToken/"+token;
+		String bodyMessage = "Para darse de alta en PlataformaCoruñesaDeVoluntariado introduzca una nueva contraseña en el siguiente enlace\n"+
+				"Este enlace tendrá una validez de 1 hora.\n"+fullPath+"\n" +
 				"Si ha recibido por error este mensaje ignorélo por favor";
 		message.setTo(user.getEmail());
 		message.setSubject("Registro en Plataforma Coruñesa de Voluntariado");
 		message.setText(bodyMessage);
 		javaMailSender.send(message);
+	}
+
+	@Override
+	public User addNewPassword(Long id, String newPassword) throws InstanceNotFoundException {
+		User user = permissionChecker.checkUser(id);
+		user.setPassword(passwordEncoder.encode(newPassword));
+		return user;
 	}
 
 }
