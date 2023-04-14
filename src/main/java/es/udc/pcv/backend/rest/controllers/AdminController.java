@@ -9,6 +9,7 @@ import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.rest.common.JwtGenerator;
 import es.udc.pcv.backend.rest.common.JwtInfo;
 import es.udc.pcv.backend.rest.dtos.AuthenticatedUserDto;
+import es.udc.pcv.backend.rest.dtos.MessageDTO;
 import es.udc.pcv.backend.rest.dtos.RepresentativeDto;
 import es.udc.pcv.backend.rest.dtos.UserConversor;
 import es.udc.pcv.backend.rest.dtos.UserDto;
@@ -52,7 +53,7 @@ public class AdminController {
 
   @Operation(summary = "create representative")
   @PostMapping("/createRepresentative")
-  public ResponseEntity<String> createRepresentative(
+  public ResponseEntity<MessageDTO> createRepresentative(
       @Validated({RepresentativeDto.AllValidations.class}) @RequestBody RepresentativeDto representativeDto) throws
       DuplicateInstanceException {
 
@@ -62,11 +63,9 @@ public class AdminController {
     userService.sendEmailWithToken(representative,token);
 
 
-    URI location = ServletUriComponentsBuilder
-        .fromCurrentRequest().path("/{email}")
-        .buildAndExpand(representative.getEmail()).toUri();
-
-    return ResponseEntity.created(location).body("Se ha enviado el e-mail de confirmación con éxito a "+representative.getEmail());
+    MessageDTO message = new MessageDTO();
+    message.setMessage("Se ha enviado el e-mail de confirmación con éxito a "+representative.getEmail());
+    return ResponseEntity.ok(message);
 
   }
 
