@@ -1,26 +1,34 @@
 package es.udc.pcv.backend.rest.dtos;
-
 import es.udc.pcv.backend.model.entities.User;
+import es.udc.pcv.backend.model.entities.Volunteer;
+import es.udc.pcv.backend.model.to.UserWithRepresentative;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 
-public class UserConversor {
-	
-	private UserConversor() {}
-	
-	public final static UserDto toUserDto(User user) {
-		return new UserDto(user.getId(), user.getUserName(), user.getFirstName(), user.getLastName(), user.getEmail(),
-			user.getRole().toString());
-	}
-	
-	public final static User toUser(UserDto userDto) {
-		
-		return new User(userDto.getUserName(), userDto.getPassword(), userDto.getFirstName(), userDto.getLastName(),
-			userDto.getEmail());
-	}
-	
-	public final static AuthenticatedUserDto toAuthenticatedUserDto(String serviceToken, User user) {
-		
-		return new AuthenticatedUserDto(serviceToken, toUserDto(user));
-		
-	}
+@Mapper(componentModel = "spring")
+public interface UserConversor {
+  @Named("roleToString")
+  String roleToString(User.RoleType role);
+
+  @Mapping(source = "user.role", target = "role", qualifiedByName = "roleToString")
+  @Mapping(source = "user.id", target = "id")
+  UserDto toUserDto(User user, Volunteer volunteer);
+
+  @BeanMapping(ignoreByDefault = true)
+  @Mapping(source = "password", target = "password")
+  @Mapping(source = "email", target = "email")
+  User toUser(UserDto userDto);
+
+  Volunteer toVolunteer(UserDto userDto);
+
+  UserDto toUserDto(User user);
+
+  @Mapping(source = "user", target = "userDto")
+  @Mapping(source = "serviceToken", target = "serviceToken")
+  AuthenticatedUserDto toAuthenticatedUserDto(String serviceToken, User user);
+
+  UserWithRepresentative userWithRepresentative(RepresentativeDto representativeDto);
 
 }

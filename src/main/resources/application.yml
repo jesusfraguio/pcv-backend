@@ -5,9 +5,9 @@ logging:
         SQL: debug
 spring:
   datasource:
-    url: @dataSource.url@
-    username: @dataSource.user@
-    password: @dataSource.password@
+    url: '@dataSource.url@'
+    username: '@dataSource.user@'
+    password: '@dataSource.password@'
     max-active: 4
     max-idle: 2
     max-wait: 10000
@@ -30,7 +30,22 @@ spring:
       use-sql-comments: true
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+  mail:
+    host: smtp.office365.com
+    port: 587
+    username: ENC(5ZLdlTTILNGFkR23hcLkwHmmZKuNJzRr8wK2Rn82sSXqypQrV1raloHEXfhtJcR1F+/iHFrOsa+sCfVqQejcWw==)
+    password: ENC(t7DLsa1JVcKjrxqyEkEv2tthYi+UFCNc03i9Usccz+GnKkN5Z39lGPBWvs7af2aDYsuRtryoL64zfMBsvf4vAg==)
+    protocol: smtp
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
 project:
   jwt:
-    signKey: Bu:GW8bgPlEw
+    signKey: ENC(UMEMfOY9jUwmzF7YuAKA+HKgyUub0gjeqWXVXl4HSylW3VtTU4wCAeGQYbSL7aYg)
     expirationMinutes: 1440
+
+
+jasypt:
+  encryptor:
+    password: '@jasypt.encryptor.password@'
+    algorithm: PBEWithHMACSHA512AndAES_256

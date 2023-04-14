@@ -18,13 +18,13 @@
     </parent>
     
     <properties>
-    
+        <org.mapstruct.version>1.5.3.Final</org.mapstruct.version>
         <!--  Data source properties -->
         <dataSource.user>pcv</dataSource.user>
-        <dataSource.password>BOtAztg2uf20CziEqsinfdNOwVFS4nfa</dataSource.password>
+        <dataSource.password>${env.PCV_DATABASE_PASSWORD}</dataSource.password>
         <testDataSource.user>${dataSource.user}</testDataSource.user>
         <testDataSource.password>pcv</testDataSource.password>
-    
+
     	<!--  Compiler options -->
    		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -57,7 +57,7 @@
                 <dataSource.url>${dataSource.baseUrl}?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=Europe/Madrid</dataSource.url>
                 <testDataSource.url>jdbc:postgresql://localhost:5433/pcvtest?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=Europe/Madrid</testDataSource.url>
                 <dataSource.createTablesScript>1-MySQLCreateTables.sql</dataSource.createTablesScript>
-                <!--<dataSource.createDataScript>2-MySQLCreateData.sql</dataSource.createDataScript>-->
+                <dataSource.createDataScript>2-MySQLCreateData.sql</dataSource.createDataScript>
             </properties>
         </profile>
     </profiles>
@@ -106,10 +106,25 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${org.mapstruct.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
             <version>1.6.14</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.ulisesbocchio</groupId>
+            <artifactId>jasypt-spring-boot-starter</artifactId>
+            <version>3.0.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
         <!--
         <dependency>
             <groupId>org.openapitools</groupId>
@@ -141,6 +156,11 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>com.github.ulisesbocchio</groupId>
+                <artifactId>jasypt-maven-plugin</artifactId>
+                <version>3.0.5</version>
             </plugin>
 
             <plugin>
@@ -183,6 +203,7 @@
                         <basedir>${basedir}</basedir>
                         <includes>
                             <include>src/sql/${dataSource.createTablesScript}</include>
+                            <include>src/sql/${dataSource.createDataScript}</include>
                         </includes>
                     </fileset>
                 </configuration>
@@ -210,7 +231,23 @@
                     </execution>
                 </executions>
             </plugin>
-            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>1.8</source> <!-- depending on your project -->
+                    <target>1.8</target> <!-- depending on your project -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${org.mapstruct.version}</version>
+                        </path>
+                        <!-- other annotation processors -->
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
         </plugins>
 
     </build>
