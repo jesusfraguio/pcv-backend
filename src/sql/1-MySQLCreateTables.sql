@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS "VolunteerRecord";
+DROP TABLE IF EXISTS "Representative";
 DROP TABLE IF EXISTS "User";
 
 CREATE TABLE "User" (
@@ -23,5 +24,14 @@ CREATE TABLE "VolunteerRecord" (
     "isDeleted" BOOLEAN NOT NULL,
     CONSTRAINT "VolunteerRecordDniUniqueKey" UNIQUE ("dni")
 );
+
 CREATE INDEX "VolunteerRecordIndexByDni" ON "VolunteerRecord" ("dni") WHERE "dni" IS NOT NULL;
 CREATE INDEX "VolunteerRecordIndexByUserId" ON "VolunteerRecord" ("userId") WHERE "dni" IS NULL;
+
+CREATE TABLE "Representative" (
+    "phone" VARCHAR(20) NOT NULL,
+    "name" VARCHAR(60),
+    "surname" VARCHAR(60),
+    "id" BIGINT NOT NULL PRIMARY KEY,
+    CONSTRAINT "RepresentativeUserForeignKey" FOREIGN KEY ("id") REFERENCES "User" ("id")
+);

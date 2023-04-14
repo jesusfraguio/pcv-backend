@@ -1,13 +1,13 @@
 package es.udc.pcv.backend.rest.controllers;
 
-import es.udc.pcv.backend.model.entities.UserWithVolunteer;
+import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.entities.Volunteer;
+import es.udc.pcv.backend.rest.dtos.NewPasswordParamsDto;
 import es.udc.pcv.backend.rest.dtos.UserConversor;
 import java.net.URI;
 import java.util.Locale;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -150,7 +150,17 @@ public class UserController {
 		userService.changePassword(id, params.getOldPassword(), params.getNewPassword());
 		
 	}
-	
+	@PostMapping("/newPasswordByTemporallyToken")
+	public AuthenticatedUserDto createPasswordByToken(@RequestAttribute Long userId, @Validated @RequestBody
+			NewPasswordParamsDto params)
+			throws InstanceNotFoundException {
+
+		User user = userService.addNewPassword(userId,params.getNewPassword());
+
+		return userConversor.toAuthenticatedUserDto(generateServiceToken(user), user);
+
+	}
+
 	private String generateServiceToken(User user) {
 		
 		JwtInfo jwtInfo = new JwtInfo(user.getId(), user.getEmail(), user.getRole().toString());

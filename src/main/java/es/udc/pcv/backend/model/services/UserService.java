@@ -1,12 +1,13 @@
 package es.udc.pcv.backend.model.services;
 
-import es.udc.pcv.backend.model.entities.UserWithVolunteer;
+import es.udc.pcv.backend.model.entities.Representative;
+import es.udc.pcv.backend.model.to.UserWithRepresentative;
+import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.exceptions.DuplicateInstanceException;
 import es.udc.pcv.backend.model.exceptions.IncorrectLoginException;
 import es.udc.pcv.backend.model.exceptions.IncorrectPasswordException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.entities.User;
-import es.udc.pcv.backend.rest.dtos.UserDto;
 
 public interface UserService {
 	
@@ -20,5 +21,12 @@ public interface UserService {
 	
 	void changePassword(Long id, String oldPassword, String newPassword)
 		throws InstanceNotFoundException, IncorrectPasswordException;
+
+	Representative createRepresentative(UserWithRepresentative userWithRepresentative)
+			throws DuplicateInstanceException;
+
+	void sendEmailWithToken(User user, String token);
+
+	User addNewPassword(Long id, String newPassword) throws InstanceNotFoundException;
 
 }

@@ -1,7 +1,7 @@
 package es.udc.pcv.backend.rest.dtos;
 import es.udc.pcv.backend.model.entities.User;
 import es.udc.pcv.backend.model.entities.Volunteer;
-import es.udc.pcv.backend.rest.dtos.UserDto;
+import es.udc.pcv.backend.model.to.UserWithRepresentative;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -28,5 +28,7 @@ public interface UserConversor {
   @Mapping(source = "user", target = "userDto")
   @Mapping(source = "serviceToken", target = "serviceToken")
   AuthenticatedUserDto toAuthenticatedUserDto(String serviceToken, User user);
+
+  UserWithRepresentative userWithRepresentative(RepresentativeDto representativeDto);
 
 }

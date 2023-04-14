@@ -1,5 +1,7 @@
-package es.udc.pcv.backend.model.entities;
+package es.udc.pcv.backend.model.to;
 
+import es.udc.pcv.backend.model.entities.User;
+import es.udc.pcv.backend.model.entities.Volunteer;
 
 public class UserWithVolunteer {
   private User user;
