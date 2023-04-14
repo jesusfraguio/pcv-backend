@@ -21,10 +21,10 @@
         <org.mapstruct.version>1.5.3.Final</org.mapstruct.version>
         <!--  Data source properties -->
         <dataSource.user>pcv</dataSource.user>
-        <dataSource.password>BOtAztg2uf20CziEqsinfdNOwVFS4nfa</dataSource.password>
+        <dataSource.password>${env.PCV_DATABASE_PASSWORD}</dataSource.password>
         <testDataSource.user>${dataSource.user}</testDataSource.user>
         <testDataSource.password>pcv</testDataSource.password>
-    
+
     	<!--  Compiler options -->
    		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
