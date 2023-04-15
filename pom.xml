@@ -207,6 +207,7 @@
                         </includes>
                     </fileset>
                 </configuration>
+                <!--
                 <executions>
                     <execution>
                         <id>create-tables-for-testing</id>
@@ -230,7 +231,9 @@
                         </configuration>
                     </execution>
                 </executions>
+                -->
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
