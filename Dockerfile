@@ -3,7 +3,7 @@
 #
 FROM maven:3.8.2-openjdk-17 AS build
 COPY . .
-RUN mvn clean package -DskipTests
+RUN mvn clean package $MAVEN_OPTS
 
 #
 # Package stage
