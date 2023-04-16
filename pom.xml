@@ -22,6 +22,9 @@
         <!--  Data source properties -->
         <dataSource.user>pcv</dataSource.user>
         <dataSource.password>${env.PCV_DATABASE_PASSWORD}</dataSource.password>
+        <email.address>${env.EMAIL_ADDRESS}</email.address>
+        <email.password>${env.EMAIL_PASSWORD}</email.password>
+        <jwt.signKey>${env.SIGN_KEY}</jwt.signKey>
         <testDataSource.user>${dataSource.user}</testDataSource.user>
         <testDataSource.password>pcv</testDataSource.password>
 
@@ -116,11 +119,6 @@
             <version>1.6.14</version>
         </dependency>
         <dependency>
-            <groupId>com.github.ulisesbocchio</groupId>
-            <artifactId>jasypt-spring-boot-starter</artifactId>
-            <version>3.0.5</version>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
@@ -156,11 +154,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>com.github.ulisesbocchio</groupId>
-                <artifactId>jasypt-maven-plugin</artifactId>
-                <version>3.0.5</version>
             </plugin>
 
             <plugin>

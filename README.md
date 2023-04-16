@@ -8,13 +8,12 @@
 - Docker or Podman(currently only for testing)
 
 ## BEFORE ALL
-### Configurar desencriptado de application.yml
+### Configurar variables de entorno
 Si estas en Windows:
-- Click en editar las variables de Entorno del sistema y añadir nueva variable cuyo nombre sea MAVEN_OPTS con un valor:
+- Click en editar las variables de Entorno del sistema y añadir nuevas variables
 ```
-  -Djasypt.plugin.path="file:src/main/resources/application.yml" -Djasypt.encryptor.password=secretKey -Djasypt.encryptor.algorithm=PBEWithHMACSHA512AndAES_256
+  EMAIL_ADDRESS, EMAIL_PASSWORD, SIGN_KEY, PCV_DATABASE_PASSWORD
   ```
-- En principio debería bastar con jasypt.ecryptor.password pero para asegurarse se pueden poner las 3. secretKey es un ejemplo, por seguridad no aparecera la contraseña real por ningún sitio
 
 ## Configuración de la BD
 ### Producción

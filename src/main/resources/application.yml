@@ -33,19 +33,14 @@ spring:
   mail:
     host: smtp.office365.com
     port: 587
-    username: ENC(5ZLdlTTILNGFkR23hcLkwHmmZKuNJzRr8wK2Rn82sSXqypQrV1raloHEXfhtJcR1F+/iHFrOsa+sCfVqQejcWw==)
-    password: ENC(t7DLsa1JVcKjrxqyEkEv2tthYi+UFCNc03i9Usccz+GnKkN5Z39lGPBWvs7af2aDYsuRtryoL64zfMBsvf4vAg==)
+    username: '@email.address@'
+    password: '@email.password@'
     protocol: smtp
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
 project:
   jwt:
-    signKey: ENC(UMEMfOY9jUwmzF7YuAKA+HKgyUub0gjeqWXVXl4HSylW3VtTU4wCAeGQYbSL7aYg)
+    signKey: '@jwt.signKey@'
     expirationMinutes: 1440
 
-
-jasypt:
-  encryptor:
-    password: '@jasypt.encryptor.password@'
-    algorithm: PBEWithHMACSHA512AndAES_256

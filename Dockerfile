@@ -2,8 +2,6 @@
 # Build stage
 #
 FROM maven:3.8.2-openjdk-17 AS build
-ARG MAVEN_OPTS
-ENV MAVEN_OPTS=${MAVEN_OPTS}
 COPY . .
 RUN mvn clean package
 
