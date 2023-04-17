@@ -1,6 +1,40 @@
 DROP TABLE IF EXISTS "VolunteerRecord";
 DROP TABLE IF EXISTS "Representative";
+DROP TABLE IF EXISTS "Entity";
 DROP TABLE IF EXISTS "User";
+DROP TABLE IF EXISTS "File";
+DROP TYPE IF EXISTS file_type;
+
+CREATE TYPE file_type AS ENUM (
+  'dni',
+  'harassementCert',
+  'photo',
+  'formationCompleted'
+  'agreementFileSignedByEntity',
+  'agreementFileSignedByBoth',
+  'agreementFile',
+  'logo'
+);
+
+CREATE TABLE "File"(
+   "id" uuid NOT NULL PRIMARY KEY,
+   "date" timestamp without time zone NOT NULL,
+   "originalName" varchar(255) NOT NULL,
+   "filetype" file_type NOT NULL
+);
+CREATE TABLE "Entity"(
+    "id" BIGSERIAL PRIMARY KEY,
+    "name" VARCHAR(123) NOT NULL,
+    "shortDescription" VARCHAR(255) NOT NULL,
+    "url" VARCHAR(63),
+    "address" VARCHAR(60),
+    "email" VARCHAR(60),
+    "phone" VARCHAR(60),
+    "certFileId" uuid,
+    "logoId" uuid,
+    CONSTRAINT "EntityFileCertForeignKey" FOREIGN KEY ("certFileId") REFERENCES "File" ("id"),
+    CONSTRAINT "EntityFileLogoForeignKey" FOREIGN KEY ("logoId") REFERENCES "File" ("id")
+);
 
 CREATE TABLE "User" (
     "id" BIGSERIAL PRIMARY KEY,
@@ -33,5 +67,7 @@ CREATE TABLE "Representative" (
     "name" VARCHAR(60),
     "surname" VARCHAR(60),
     "id" BIGINT NOT NULL PRIMARY KEY,
+    "entityId" BIGINT NOT NULL,
+    CONSTRAINT "RepresentativeEntityForeignKey" FOREIGN KEY("entityId") REFERENCES "Entity" (id),
     CONSTRAINT "RepresentativeUserForeignKey" FOREIGN KEY ("id") REFERENCES "User" ("id")
 );

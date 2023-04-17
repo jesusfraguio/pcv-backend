@@ -3,6 +3,7 @@ package es.udc.pcv.backend.rest.controllers;
 import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.entities.User;
 import es.udc.pcv.backend.model.exceptions.DuplicateInstanceException;
+import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.services.UserService;
 import es.udc.pcv.backend.model.to.UserWithRepresentative;
 import es.udc.pcv.backend.model.to.UserWithVolunteer;
@@ -54,8 +55,9 @@ public class AdminController {
   @Operation(summary = "create representative")
   @PostMapping("/createRepresentative")
   public ResponseEntity<MessageDTO> createRepresentative(
-      @Validated({RepresentativeDto.AllValidations.class}) @RequestBody RepresentativeDto representativeDto) throws
-      DuplicateInstanceException {
+      @Validated({RepresentativeDto.AllValidations.class}) @RequestBody RepresentativeDto representativeDto)
+      throws
+      DuplicateInstanceException, InstanceNotFoundException {
 
     UserWithRepresentative userWithRepresentative = userConversor.userWithRepresentative(representativeDto);
     Representative representative = userService.createRepresentative(userWithRepresentative);

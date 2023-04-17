@@ -1,5 +1,6 @@
 package es.udc.pcv.backend.model.services;
 
+import es.udc.pcv.backend.model.entities.EntidadDao;
 import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.entities.RepresentativeDao;
 import es.udc.pcv.backend.model.to.UserWithRepresentative;
@@ -39,6 +40,9 @@ public class UserServiceImpl implements UserService {
 	
 	@Autowired
 	private UserDao userDao;
+
+	@Autowired
+	private EntidadDao entityDao;
 
 	@Autowired
 	private VolunteerDao volunteerDao;
@@ -126,12 +130,15 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public Representative createRepresentative(UserWithRepresentative userWithRepresentative)
-			throws DuplicateInstanceException {
+			throws DuplicateInstanceException, InstanceNotFoundException {
 
 		if (userDao.existsByEmail(userWithRepresentative.getEmail())) {
 			throw new DuplicateInstanceException("project.entities.user", userWithRepresentative.getEmail());
 		}
 
+		if (!entityDao.existsById(userWithRepresentative.getEntityId())){
+			throw new InstanceNotFoundException("project.entities.entidad",userWithRepresentative.getEntityId());
+		}
 		StringBuilder sb = new StringBuilder(10);
 		for (int i = 0; i < 10; i++) {
 			char randomChar = (char) (RANDOM.nextInt(95) + 32); //contraseña con caracteres printeables ASCII 32-126
@@ -143,7 +150,8 @@ public class UserServiceImpl implements UserService {
 		user.setRole(User.RoleType.REPRESENTATIVE);
 
 		Representative representative = new Representative(user,userWithRepresentative.getName(),
-				userWithRepresentative.getSurname(),userWithRepresentative.getPhone());
+				userWithRepresentative.getSurname(),userWithRepresentative.getPhone(),entityDao.findById(
+				userWithRepresentative.getEntityId()).get());
 		return representativeDao.save(representative);
 	}
 
