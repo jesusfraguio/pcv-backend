@@ -79,12 +79,12 @@ public class Entidad {
   }
 
   @Column(name = "\"address\"")
-  public String getLocality() {
+  public String getAddress() {
     return address;
   }
 
-  public void setLocality(String locality) {
-    this.address = locality;
+  public void setAddress(String address) {
+    this.address = address;
   }
 
   @Column(name = "\"email\"")

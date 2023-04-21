@@ -1,5 +1,6 @@
 package es.udc.pcv.backend.rest.common;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -26,7 +27,15 @@ public class CommonControllerAdvice {
 	
 	@Autowired
 	private MessageSource messageSource;
-	
+
+	@ExceptionHandler(IOException.class)
+	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+	@ResponseBody
+	public ErrorsDto handleIOException(IOException exception, Locale locale) {
+		String errorMessage = messageSource.getMessage("io.exception", null, "An I/O error occurred", locale);
+		return new ErrorsDto(errorMessage);
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ResponseBody
@@ -43,9 +52,9 @@ public class CommonControllerAdvice {
 	@ResponseStatus(HttpStatus.NOT_FOUND)
 	@ResponseBody
 	public ErrorsDto handleInstanceNotFoundException(InstanceNotFoundException exception, Locale locale) {
-		
+
 		String nameMessage = messageSource.getMessage(exception.getName(), null, exception.getName(), locale);
-		String errorMessage = messageSource.getMessage(INSTANCE_NOT_FOUND_EXCEPTION_CODE, 
+		String errorMessage = messageSource.getMessage(INSTANCE_NOT_FOUND_EXCEPTION_CODE,
 				new Object[] {nameMessage, exception.getKey().toString()}, INSTANCE_NOT_FOUND_EXCEPTION_CODE, locale);
 
 		return new ErrorsDto(errorMessage);
