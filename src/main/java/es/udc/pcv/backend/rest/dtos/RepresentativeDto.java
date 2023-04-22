@@ -26,6 +26,8 @@ public class RepresentativeDto {
     @NotNull(groups={RepresentativeDto.AllValidations.class})
     @Size(min=1, max=15, groups={RepresentativeDto.AllValidations.class})
     private String phone;
+    @NotNull(groups={RepresentativeDto.AllValidations.class})
+    private long entityId;
 
     public Long getId() {
         return id;
@@ -81,5 +83,13 @@ public class RepresentativeDto {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public long getEntityId() {
+        return entityId;
+    }
+
+    public void setEntityId(long entityId) {
+        this.entityId = entityId;
     }
 }

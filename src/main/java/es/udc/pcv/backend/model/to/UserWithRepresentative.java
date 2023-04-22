@@ -7,15 +7,17 @@ public class UserWithRepresentative {
   private String name;
   private String surname;
   private String phone;
+  private long entityId;
 
   public UserWithRepresentative(String password, String email,
                                 String name, String surname,
-                                String phone) {
+                                String phone, long entityId) {
     this.password = password;
     this.email = email;
     this.name = name;
     this.surname = surname;
     this.phone = phone;
+    this.entityId = entityId;
   }
 
   public long getId() {
@@ -64,5 +66,13 @@ public class UserWithRepresentative {
 
   public void setPhone(String phone) {
     this.phone = phone;
+  }
+
+  public long getEntityId() {
+    return entityId;
+  }
+
+  public void setEntityId(long entityId) {
+    this.entityId = entityId;
   }
 }
