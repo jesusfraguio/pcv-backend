@@ -16,6 +16,5 @@ public interface EntityConversor {
   @Mapping(target = "certName", ignore = true)
   EntityDto toEntityDto(Entidad entity);
 
-  @BeanMapping(ignoreByDefault = true)
   List<EntityDto> toEntityListDto(List<Entidad> entity);
 }

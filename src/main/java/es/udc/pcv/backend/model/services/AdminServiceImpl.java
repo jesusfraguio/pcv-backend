@@ -67,7 +67,7 @@ public class AdminServiceImpl implements AdminService{
       throw new IOException("File already exists: " + filePath);
     }
     Files.copy(multipartFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-    File saved = fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),File.FileType.LOGO));
+    File saved = fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),File.FileType.LOGO,extension));
     Entidad entity = entityDao.findById(entityId).get();
     entity.setLogo(saved);
     return saved;
@@ -91,7 +91,7 @@ public class AdminServiceImpl implements AdminService{
       throw new IOException("File already exists: " + filePath); // se podria quitar esta comprobacion para que sea mas eficiente
     }
     Files.copy(multipartFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-    File saved = fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),File.FileType.AGREEMENT_FILE));
+    File saved = fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),File.FileType.AGREEMENT_FILE,extension));
     Entidad entity = entityDao.findById(entityId).get();
     entity.setCertFile(saved);
     return saved;

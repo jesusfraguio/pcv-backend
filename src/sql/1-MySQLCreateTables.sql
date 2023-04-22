@@ -20,7 +20,8 @@ CREATE TABLE "File"(
    "id" uuid NOT NULL PRIMARY KEY,
    "date" timestamp without time zone NOT NULL,
    "originalName" varchar(255) NOT NULL,
-   "filetype" varchar(31) NOT NULL
+   "filetype" varchar(31) NOT NULL,
+   "extension" varchar(7) NOT NULL
 );
 CREATE TABLE "Entity"(
     "id" BIGSERIAL PRIMARY KEY,

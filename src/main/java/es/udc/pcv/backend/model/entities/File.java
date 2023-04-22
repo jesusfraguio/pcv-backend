@@ -37,16 +37,18 @@ public class File {
   private Date date;
   private String originalName;
   private FileType fileType;
+  private String extension;
 
   public File() {
   }
 
   public File(UUID id, Date date, String originalName,
-              FileType fileType) {
+              FileType fileType, String extension) {
     this.id = id;
     this.date = date;
     this.originalName = originalName;
     this.fileType = fileType;
+    this.extension = extension;
   }
 
 
@@ -86,5 +88,14 @@ public class File {
 
   public void setFileType(FileType fileType) {
     this.fileType = fileType;
+  }
+
+  @Column(name = "\"extension\"")
+  public String getExtension() {
+    return extension;
+  }
+
+  public void setExtension(String extension) {
+    this.extension = extension;
   }
 }
