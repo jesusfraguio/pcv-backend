@@ -9,6 +9,7 @@ import es.udc.pcv.backend.model.exceptions.DuplicateInstanceException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.services.AdminService;
 import es.udc.pcv.backend.model.services.Block;
+import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.services.UserService;
 import es.udc.pcv.backend.model.to.EntityData;
 import es.udc.pcv.backend.model.to.UserWithRepresentative;
@@ -25,9 +26,6 @@ import es.udc.pcv.backend.rest.dtos.UserDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
-import java.net.URI;
-import java.util.List;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
@@ -44,7 +42,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/admin")
@@ -62,6 +59,9 @@ public class AdminController {
 
   @Autowired
   private AdminService adminService;
+
+  @Autowired
+  private RepresentativeService representativeService;
 
   @Autowired
   private UserConversor userConversor;
@@ -104,6 +104,11 @@ public class AdminController {
   public Block<EntityDto> getEntities(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
     Block<Entidad> entidadBlock = adminService.getEntities(page,size);
     return new Block<>(entityConversor.toEntityListDto(entidadBlock.getItems()),entidadBlock.getExistMoreItems());
+  }
+
+  @GetMapping("/getMyEntity")
+  public EntityDto getMyEntity(@RequestAttribute long userId){
+    return entityConversor.toEntityDto(representativeService.getMyEntity(userId));
   }
 
   @Operation(summary = "create representative")

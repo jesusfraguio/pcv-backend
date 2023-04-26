@@ -1,7 +1,12 @@
 DROP TABLE IF EXISTS "VolunteerRecord";
 DROP TABLE IF EXISTS "Representative";
+DROP TABLE IF EXISTS "Project_Ods";
+DROP TABLE IF EXISTS "Task";
+DROP TABLE IF EXISTS "Project";
+DROP TABLE IF EXISTS "CollaborationArea";
 DROP TABLE IF EXISTS "Entity";
 DROP TABLE IF EXISTS "User";
+DROP TABLE IF EXISTS "Ods";
 DROP TABLE IF EXISTS "File";
 DROP TYPE IF EXISTS file_type;
 
@@ -36,6 +41,53 @@ CREATE TABLE "Entity"(
     CONSTRAINT "EntityFileCertForeignKey" FOREIGN KEY ("certFileId") REFERENCES "File" ("id"),
     CONSTRAINT "EntityFileLogoForeignKey" FOREIGN KEY ("logoId") REFERENCES "File" ("id")
 );
+CREATE TABLE "CollaborationArea" (
+    "id" BIGSERIAL PRIMARY KEY,
+    "name" VARCHAR(63) NOT NULL
+);
+CREATE TABLE "Project" (
+    "id" BIGSERIAL PRIMARY KEY,
+    "name" VARCHAR(63) NOT NULL,
+    "shortDescription" VARCHAR(127) NOT NULL,
+    "longDescription" VARCHAR(500),
+    "locality" VARCHAR(60) NOT NULL,
+    "schedule" VARCHAR(60) NOT NULL,
+    "capacity" INTEGER NOT NULL,
+    "preferableVolunteer" VARCHAR(63) NOT NULL,
+    "completenessDate" DATE,
+    "areChildren" BOOLEAN NOT NULL,
+    "isPaused" BOOLEAN NOT NULL,
+    "isVisible" BOOLEAN NOT NULL,
+    "isDeleted" BOOLEAN NOT NULL,
+    "entityId" BIGINT NOT NULL,
+    "collaborationAreaId" BIGINT NOT NULL,
+    CONSTRAINT "ProjectEntityForeignKey" FOREIGN KEY ("entityId") REFERENCES "Entity" ("id"),
+    CONSTRAINT "ProjectAreaForeignKey" FOREIGN KEY ("collaborationAreaId") REFERENCES "CollaborationArea" ("id")
+);
+
+CREATE TABLE "Ods" (
+    "id" BIGSERIAL PRIMARY KEY,
+    "name" VARCHAR(63) NOT NULL,
+    "number" INTEGER NOT NULL,
+    "description" VARCHAR(500) NOT NULL,
+    "url" VARCHAR(127) NOT NULL
+);
+CREATE TABLE "Project_Ods" (
+    "projectId" BIGINT NOT NULL,
+    "odsId" BIGINT NOT NULL,
+    PRIMARY KEY ("projectId", "odsId"),
+    CONSTRAINT "Project_OdsProjectForeignKey" FOREIGN KEY ("projectId")
+       REFERENCES "Project" ("id") ON DELETE CASCADE,
+    CONSTRAINT "Project_OdsOdsForeignKey" FOREIGN KEY ("odsId")
+       REFERENCES "Ods" ("id") ON DELETE CASCADE
+);
+CREATE TABLE "Task"(
+    "id" BIGSERIAL PRIMARY KEY,
+    "name" VARCHAR(255) NOT NULL,
+    "projectId" BIGINT NOT NULL,
+    CONSTRAINT "TaskProjectForeignKey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id")
+);
+
 
 CREATE TABLE "User" (
     "id" BIGSERIAL PRIMARY KEY,
