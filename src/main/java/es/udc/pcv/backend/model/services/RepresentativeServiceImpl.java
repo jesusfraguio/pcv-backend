@@ -2,6 +2,7 @@ package es.udc.pcv.backend.model.services;
 
 import es.udc.pcv.backend.model.entities.CollaborationArea;
 import es.udc.pcv.backend.model.entities.CollaborationAreaDao;
+import es.udc.pcv.backend.model.entities.Entidad;
 import es.udc.pcv.backend.model.entities.EntidadDao;
 import es.udc.pcv.backend.model.entities.Ods;
 import es.udc.pcv.backend.model.entities.OdsDao;
@@ -78,6 +79,11 @@ public class RepresentativeServiceImpl implements RepresentativeService{
     project.setTasks(taskList);
     projectDao.save(project);
     return project;
+  }
+
+  @Override
+  public Entidad getMyEntity(long userId) {
+    return representativeDao.findById(userId).get().getEntity();
   }
 
   @Override
