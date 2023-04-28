@@ -1,6 +1,10 @@
 package es.udc.pcv.backend.test.model.services;
 
+import es.udc.pcv.backend.model.entities.Entidad;
+import es.udc.pcv.backend.model.entities.EntidadDao;
 import es.udc.pcv.backend.model.entities.Representative;
+import es.udc.pcv.backend.model.services.AdminService;
+import es.udc.pcv.backend.model.to.EntityData;
 import es.udc.pcv.backend.model.to.UserWithRepresentative;
 import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.entities.Volunteer;
@@ -29,13 +33,17 @@ public class UserServiceTest {
 	
 	@Autowired
 	private UserService userService;
+
+	@Autowired
+	private AdminService adminService;
 	
 	private User createUser(String email) {
 		return new User("password",email);
 	}
 
 	private Representative createRepresentative() {
-		return new Representative("name","surname","600999999");
+		Entidad entidad = adminService.createEntity(new EntityData("Cáritas","Description","caritas.es","rua","mail@caritas.es",null,null,null));
+		return new Representative("name","surname","600999999", entidad);
 	}
 
 	private Volunteer createVolunteer() {
@@ -173,7 +181,7 @@ public class UserServiceTest {
 		User user = createUser("representante6@gmail.com");
 		Representative representative = createRepresentative();
 		long userId = userService.createRepresentative(new UserWithRepresentative(user.getPassword(),user.getEmail(),representative.getName(),
-				representative.getSurname(),representative.getPhone())).getId();
+				representative.getSurname(),representative.getPhone(),representative.getEntity().getId())).getId();
 
 		User loggedInUser = userService.loginFromId(userId);
 
@@ -183,14 +191,15 @@ public class UserServiceTest {
 	}
 
 	@Test
-	public void testCreateRepresentativeDuplicatedEmail() throws DuplicateInstanceException {
+	public void testCreateRepresentativeDuplicatedEmail()
+			throws DuplicateInstanceException, InstanceNotFoundException {
 
 		User user = createUser("representante6@gmail.com");
 		Representative representative = createRepresentative();
 		userService.createRepresentative(new UserWithRepresentative(user.getPassword(),user.getEmail(),representative.getName(),
-				representative.getSurname(),representative.getPhone()));
+				representative.getSurname(),representative.getPhone(),representative.getEntity().getId()));
 		assertThrows(DuplicateInstanceException.class, () -> userService.createRepresentative(new UserWithRepresentative(user.getPassword(),user.getEmail(),representative.getName(),
-				representative.getSurname(),representative.getPhone())));
+				representative.getSurname(),representative.getPhone(),representative.getEntity().getId())));
 
 	}
 

@@ -23,7 +23,7 @@ public interface UserService {
 		throws InstanceNotFoundException, IncorrectPasswordException;
 
 	Representative createRepresentative(UserWithRepresentative userWithRepresentative)
-			throws DuplicateInstanceException;
+        throws DuplicateInstanceException, InstanceNotFoundException;
 
 	void sendEmailWithToken(User user, String token);
 
