@@ -58,7 +58,7 @@
                 <!-- <dataSource.baseUrl>jdbc:postgresql://localhost:5432/pcv</dataSource.baseUrl> -->
                 <dataSource.baseUrl>jdbc:postgresql://dpg-cgk0kgm4dad69r7kb3cg-a.frankfurt-postgres.render.com/pcv</dataSource.baseUrl>
                 <dataSource.url>${dataSource.baseUrl}?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=Europe/Madrid</dataSource.url>
-                <testDataSource.url>jdbc:postgresql://localhost:5433/pcvtest?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=Europe/Madrid</testDataSource.url>
+                <!--<testDataSource.url>jdbc:postgresql://localhost:5433/pcvtest?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=Europe/Madrid</testDataSource.url>-->
                 <dataSource.createTablesScript>1-MySQLCreateTables.sql</dataSource.createTablesScript>
                 <dataSource.createDataScript>2-MySQLCreateData.sql</dataSource.createDataScript>
             </properties>
@@ -210,6 +210,7 @@
                         </includes>
                     </fileset>
                 </configuration>
+                <!--
                 <executions>
                     <execution>
                         <id>create-tables-for-testing</id>
@@ -234,6 +235,7 @@
                         </configuration>
                     </execution>
                 </executions>
+                -->
             </plugin>
 
             <plugin>
