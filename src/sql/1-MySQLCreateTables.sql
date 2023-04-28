@@ -1,6 +1,93 @@
 DROP TABLE IF EXISTS "VolunteerRecord";
 DROP TABLE IF EXISTS "Representative";
+DROP TABLE IF EXISTS "Project_Ods";
+DROP TABLE IF EXISTS "Task";
+DROP TABLE IF EXISTS "Project";
+DROP TABLE IF EXISTS "CollaborationArea";
+DROP TABLE IF EXISTS "Entity";
 DROP TABLE IF EXISTS "User";
+DROP TABLE IF EXISTS "Ods";
+DROP TABLE IF EXISTS "File";
+DROP TYPE IF EXISTS file_type;
+
+CREATE TYPE file_type AS ENUM (
+  'dni',
+  'harassementCert',
+  'photo',
+  'formationCompleted'
+  'agreementFileSignedByEntity',
+  'agreementFileSignedByBoth',
+  'agreementFile',
+  'logo'
+);
+
+CREATE TABLE "File"(
+   "id" uuid NOT NULL PRIMARY KEY,
+   "date" timestamp without time zone NOT NULL,
+   "originalName" varchar(255) NOT NULL,
+   "filetype" varchar(31) NOT NULL,
+   "extension" varchar(7) NOT NULL
+);
+CREATE TABLE "Entity"(
+    "id" BIGSERIAL PRIMARY KEY,
+    "name" VARCHAR(123) NOT NULL,
+    "shortDescription" VARCHAR(255) NOT NULL,
+    "url" VARCHAR(63),
+    "address" VARCHAR(60),
+    "email" VARCHAR(60),
+    "phone" VARCHAR(60),
+    "certFileId" uuid,
+    "logoId" uuid,
+    CONSTRAINT "EntityFileCertForeignKey" FOREIGN KEY ("certFileId") REFERENCES "File" ("id"),
+    CONSTRAINT "EntityFileLogoForeignKey" FOREIGN KEY ("logoId") REFERENCES "File" ("id")
+);
+CREATE TABLE "CollaborationArea" (
+    "id" BIGSERIAL PRIMARY KEY,
+    "name" VARCHAR(63) NOT NULL
+);
+CREATE TABLE "Project" (
+    "id" BIGSERIAL PRIMARY KEY,
+    "name" VARCHAR(63) NOT NULL,
+    "shortDescription" VARCHAR(127) NOT NULL,
+    "longDescription" VARCHAR(500),
+    "locality" VARCHAR(60) NOT NULL,
+    "schedule" VARCHAR(60) NOT NULL,
+    "capacity" INTEGER NOT NULL,
+    "preferableVolunteer" VARCHAR(63) NOT NULL,
+    "completenessDate" DATE,
+    "areChildren" BOOLEAN NOT NULL,
+    "isPaused" BOOLEAN NOT NULL,
+    "isVisible" BOOLEAN NOT NULL,
+    "isDeleted" BOOLEAN NOT NULL,
+    "entityId" BIGINT NOT NULL,
+    "collaborationAreaId" BIGINT NOT NULL,
+    CONSTRAINT "ProjectEntityForeignKey" FOREIGN KEY ("entityId") REFERENCES "Entity" ("id"),
+    CONSTRAINT "ProjectAreaForeignKey" FOREIGN KEY ("collaborationAreaId") REFERENCES "CollaborationArea" ("id")
+);
+
+CREATE TABLE "Ods" (
+    "id" BIGSERIAL PRIMARY KEY,
+    "name" VARCHAR(63) NOT NULL,
+    "number" INTEGER NOT NULL,
+    "description" VARCHAR(500) NOT NULL,
+    "url" VARCHAR(127) NOT NULL
+);
+CREATE TABLE "Project_Ods" (
+    "projectId" BIGINT NOT NULL,
+    "odsId" BIGINT NOT NULL,
+    PRIMARY KEY ("projectId", "odsId"),
+    CONSTRAINT "Project_OdsProjectForeignKey" FOREIGN KEY ("projectId")
+       REFERENCES "Project" ("id") ON DELETE CASCADE,
+    CONSTRAINT "Project_OdsOdsForeignKey" FOREIGN KEY ("odsId")
+       REFERENCES "Ods" ("id") ON DELETE CASCADE
+);
+CREATE TABLE "Task"(
+    "id" BIGSERIAL PRIMARY KEY,
+    "name" VARCHAR(255) NOT NULL,
+    "projectId" BIGINT NOT NULL,
+    CONSTRAINT "TaskProjectForeignKey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id")
+);
+
 
 CREATE TABLE "User" (
     "id" BIGSERIAL PRIMARY KEY,
@@ -33,5 +120,7 @@ CREATE TABLE "Representative" (
     "name" VARCHAR(60),
     "surname" VARCHAR(60),
     "id" BIGINT NOT NULL PRIMARY KEY,
+    "entityId" BIGINT NOT NULL,
+    CONSTRAINT "RepresentativeEntityForeignKey" FOREIGN KEY("entityId") REFERENCES "Entity" (id),
     CONSTRAINT "RepresentativeUserForeignKey" FOREIGN KEY ("id") REFERENCES "User" ("id")
 );

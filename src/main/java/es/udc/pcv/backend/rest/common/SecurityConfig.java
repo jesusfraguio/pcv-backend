@@ -28,6 +28,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 			.addFilter(new JwtFilter(authenticationManager(), jwtGenerator))
 			.authorizeRequests()
+			.antMatchers(HttpMethod.GET, "/healthz").permitAll()
 			.antMatchers(HttpMethod.POST, "/users/signUp").permitAll()
 			.antMatchers(HttpMethod.POST, "/users/login").permitAll()
 			.antMatchers(HttpMethod.POST, "/users/loginFromServiceToken").permitAll()
@@ -35,6 +36,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers(HttpMethod.PUT, "/users/*").hasRole("USER")
 			.antMatchers(HttpMethod.POST, "/users/*/changePassword").hasRole("USER")
 			.antMatchers(HttpMethod.POST, "/admin/createRepresentative").hasRole("ADMIN")
+			.antMatchers(HttpMethod.POST, "/admin/createEntity").hasRole("ADMIN")
+			.antMatchers(HttpMethod.GET, "/admin/getEntities").hasAnyRole("ADMIN","REPRESENTATIVE","USER")
+			.antMatchers(HttpMethod.POST,"/projects/createProject").hasAnyRole("ADMIN","REPRESENTATIVE")
+			.antMatchers(HttpMethod.GET, "/admin/getMyEntity").hasAnyRole("ADMIN","REPRESENTATIVE")
 			.anyRequest().denyAll();
 
 	}
