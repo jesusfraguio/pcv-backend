@@ -6,7 +6,9 @@ import es.udc.pcv.backend.model.entities.Entidad;
 import es.udc.pcv.backend.model.entities.Ods;
 import es.udc.pcv.backend.model.entities.Project;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
+import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.ProjectDto;
+import es.udc.pcv.backend.rest.dtos.ProjectFiltersDto;
 import java.util.List;
 
 public interface RepresentativeService {
@@ -14,4 +16,6 @@ public interface RepresentativeService {
   Entidad getMyEntity(long userId);
   List<Ods> getAllOds();
   List<CollaborationArea> getAllCollaborationArea();
+  Block<Project> findProjectsBy(ProjectFiltersDto projectFiltersDto, PageableDto pageableDto);
+
 }

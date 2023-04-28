@@ -6,6 +6,7 @@ import es.udc.pcv.backend.model.entities.User;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.model.exceptions.DuplicateInstanceException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
+import es.udc.pcv.backend.model.services.Block;
 import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.services.UserService;
 import es.udc.pcv.backend.model.to.UserWithRepresentative;
@@ -14,12 +15,17 @@ import es.udc.pcv.backend.rest.dtos.AuthenticatedUserDto;
 import es.udc.pcv.backend.rest.dtos.EntityConversor;
 import es.udc.pcv.backend.rest.dtos.MessageDTO;
 import es.udc.pcv.backend.rest.dtos.OdsWithCollaborationAreaDto;
+import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.ProjectDto;
+import es.udc.pcv.backend.rest.dtos.ProjectFiltersDto;
+import es.udc.pcv.backend.rest.dtos.ProjectSummaryDto;
 import es.udc.pcv.backend.rest.dtos.RepresentativeDto;
 import es.udc.pcv.backend.rest.dtos.UserDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.net.URI;
+import javax.validation.Valid;
+import javax.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -28,6 +34,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -64,5 +71,18 @@ public class ProjectController {
     ret.setOdsSummary(entityConversor.toOdsSummaryDto(representativeService.getAllOds()));
     ret.setAreaList(entityConversor.toCollaborationAreaDTO(representativeService.getAllCollaborationArea()));
     return ret;
+  }
+
+
+  @Operation(summary = "get a block of projects(without images for performance)")
+  @GetMapping("/searchProjectsBy")
+  public Block<ProjectSummaryDto> searchProjectsBy(@RequestParam String name, @RequestParam String locality,
+                                                       @RequestParam Long collaborationAreaId,
+                                                       @RequestParam(defaultValue = "0") int page,
+                                                       @RequestParam(defaultValue = "10") int size, @RequestParam String sortValue,
+                                                       @RequestParam String sortOrder){
+    ProjectFiltersDto projectFiltersDto = new ProjectFiltersDto(name,locality,collaborationAreaId);
+    PageableDto pageableDto = new PageableDto(page,size,sortValue,sortOrder);
+    return entityConversor.toProjectBlockDto(representativeService.findProjectsBy(projectFiltersDto,pageableDto));
   }
 }

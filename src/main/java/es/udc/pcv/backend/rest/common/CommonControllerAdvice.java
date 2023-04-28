@@ -28,6 +28,17 @@ public class CommonControllerAdvice {
 	@Autowired
 	private MessageSource messageSource;
 
+	@ExceptionHandler(IllegalArgumentException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ResponseBody
+	public ErrorsDto handleIllegalArgumentException(IllegalArgumentException exception, Locale locale) {
+
+		String errorMessage = messageSource.getMessage(exception.getMessage(), null, exception.getMessage(), locale);
+
+		return new ErrorsDto(errorMessage);
+
+	}
+
 	@ExceptionHandler(IOException.class)
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 	@ResponseBody
