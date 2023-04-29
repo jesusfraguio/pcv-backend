@@ -4,6 +4,8 @@ import es.udc.pcv.backend.model.entities.CollaborationArea;
 import es.udc.pcv.backend.model.entities.CollaborationAreaDao;
 import es.udc.pcv.backend.model.entities.Entidad;
 import es.udc.pcv.backend.model.entities.EntidadDao;
+import es.udc.pcv.backend.model.entities.File;
+import es.udc.pcv.backend.model.entities.FileDao;
 import es.udc.pcv.backend.model.entities.Ods;
 import es.udc.pcv.backend.model.entities.OdsDao;
 import es.udc.pcv.backend.model.entities.Project;
@@ -14,9 +16,11 @@ import es.udc.pcv.backend.model.entities.RepresentativeDao;
 import es.udc.pcv.backend.model.entities.Task;
 import es.udc.pcv.backend.model.entities.TaskDao;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
+import es.udc.pcv.backend.model.to.ResourceWithType;
 import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.ProjectDto;
 import es.udc.pcv.backend.rest.dtos.ProjectFiltersDto;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -25,6 +29,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -52,6 +58,9 @@ public class RepresentativeServiceImpl implements RepresentativeService{
 
   @Autowired
   private RepresentativeDao representativeDao;
+
+  @Autowired
+  private FileDao fileDao;
 
   @Override
   public Project createProject(ProjectDto projectDto, long userId)
@@ -139,6 +148,24 @@ public class RepresentativeServiceImpl implements RepresentativeService{
         ProjectSpecifications.searchProjects(projectFiltersDto.getName(), projectFiltersDto.getLocality(), projectFiltersDto.getCollaborationAreaId()), pageable);
 
     return new Block<>(projectsPage.getContent(),projectsPage.hasNext());
+  }
+
+  @Override
+  public ResourceWithType getLogo(Long entityId) throws InstanceNotFoundException {
+    Optional<Entidad> entity = entidadDao.findById(entityId);
+    if(!entity.isPresent()){
+      throw new InstanceNotFoundException("project.entities.entity", entityId);
+    }
+    File file = entity.get().getLogo();
+    java.io.File savedFile = new java.io.File("/entities/logos/"+file.getId()+"."+file.getExtension());
+
+    Resource resource;
+    try {
+       resource = new UrlResource(savedFile.toURI());
+    } catch (MalformedURLException e) {
+      throw new InstanceNotFoundException("project.entities.entity", entityId);
+    }
+    return new ResourceWithType(resource,file.getExtension());
   }
 
 

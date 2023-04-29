@@ -9,6 +9,7 @@ import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.services.Block;
 import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.services.UserService;
+import es.udc.pcv.backend.model.to.ResourceWithType;
 import es.udc.pcv.backend.model.to.UserWithRepresentative;
 import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.rest.dtos.AuthenticatedUserDto;
@@ -27,6 +28,8 @@ import java.net.URI;
 import javax.validation.Valid;
 import javax.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -76,13 +79,30 @@ public class ProjectController {
 
   @Operation(summary = "get a block of projects(without images for performance)")
   @GetMapping("/searchProjectsBy")
-  public Block<ProjectSummaryDto> searchProjectsBy(@RequestParam String name, @RequestParam String locality,
-                                                       @RequestParam Long collaborationAreaId,
+  public Block<ProjectSummaryDto> searchProjectsBy(@RequestParam(required = false) String name, @RequestParam(required = false) String locality,
+                                                       @RequestParam(required = false) Long collaborationAreaId,
                                                        @RequestParam(defaultValue = "0") int page,
-                                                       @RequestParam(defaultValue = "10") int size, @RequestParam String sortValue,
-                                                       @RequestParam String sortOrder){
+                                                       @RequestParam(defaultValue = "10") int size,
+                                                       @RequestParam(required = false) String sortValue,
+                                                       @RequestParam(required = false) String sortOrder){
     ProjectFiltersDto projectFiltersDto = new ProjectFiltersDto(name,locality,collaborationAreaId);
     PageableDto pageableDto = new PageableDto(page,size,sortValue,sortOrder);
     return entityConversor.toProjectBlockDto(representativeService.findProjectsBy(projectFiltersDto,pageableDto));
+  }
+  @Operation(summary = "get the image(logo) of an entity")
+  @GetMapping("/getLogo")
+  public ResponseEntity<Resource> getLogo(@RequestParam Long entityId) throws InstanceNotFoundException{
+    ResourceWithType resource = representativeService.getLogo(entityId);
+    MediaType mediaType;
+    if(resource.getExtension().equals("png")){
+      mediaType = MediaType.IMAGE_PNG;
+    }
+    else if(resource.getExtension().equals("gif")){
+      mediaType = MediaType.IMAGE_GIF;
+    }
+    else mediaType = MediaType.IMAGE_JPEG;
+    return ResponseEntity.ok()
+        .contentType(mediaType)
+        .body(resource.getResource());
   }
 }
