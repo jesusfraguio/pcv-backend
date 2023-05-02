@@ -157,7 +157,10 @@ public class RepresentativeServiceImpl implements RepresentativeService{
       throw new InstanceNotFoundException("project.entities.entity", entityId);
     }
     File file = entity.get().getLogo();
-    java.io.File savedFile = new java.io.File("/entities/logos/"+file.getId()+"."+file.getExtension());
+    if(file==null){
+      throw new InstanceNotFoundException("project.entities.fileLogo", entityId);
+    }
+    java.io.File savedFile = new java.io.File("./entities/logos/"+file.getId()+"."+file.getExtension());
 
     Resource resource;
     try {
@@ -166,6 +169,17 @@ public class RepresentativeServiceImpl implements RepresentativeService{
       throw new InstanceNotFoundException("project.entities.entity", entityId);
     }
     return new ResourceWithType(resource,file.getExtension());
+  }
+
+  @Override
+  public Project getProject(long projectId) throws InstanceNotFoundException {
+    Optional<Project> project = projectDao.findById(projectId);
+    if(!project.isPresent()){
+      throw new InstanceNotFoundException("project.projects.project", projectId);
+    }
+    else{
+      return project.get();
+    }
   }
 
 

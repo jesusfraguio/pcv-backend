@@ -33,6 +33,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -89,6 +90,13 @@ public class ProjectController {
     PageableDto pageableDto = new PageableDto(page,size,sortValue,sortOrder);
     return entityConversor.toProjectBlockDto(representativeService.findProjectsBy(projectFiltersDto,pageableDto));
   }
+
+  @Operation(summary = "get all detailed info of a project")
+  @GetMapping("/project/{projectId}")
+  public ProjectDto getProjectInfo(@PathVariable Long projectId) throws InstanceNotFoundException {
+    return entityConversor.toProjectDto(representativeService.getProject(projectId));
+  }
+
   @Operation(summary = "get the image(logo) of an entity")
   @GetMapping("/getLogo")
   public ResponseEntity<Resource> getLogo(@RequestParam Long entityId) throws InstanceNotFoundException{
