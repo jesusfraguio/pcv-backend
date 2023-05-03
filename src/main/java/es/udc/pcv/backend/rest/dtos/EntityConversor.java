@@ -45,6 +45,8 @@ public interface EntityConversor {
   @Mapping(target = "entityId", source = "entity.id")
   @Mapping(target = "areaId", source = "collaborationArea.id")
   @Mapping(target = "ods", source = "ods", qualifiedByName = "mapOdsToIds")
+  @Mapping(target = "entityName", source="entity.name")
+  @Mapping(target = "areaName", source = "collaborationArea.name")
   ProjectDto toProjectDto(Project project);
 
   @Mapping(target = "entityName", source = "entity.name")
