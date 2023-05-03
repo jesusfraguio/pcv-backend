@@ -39,8 +39,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers(HttpMethod.POST, "/admin/createEntity").hasRole("ADMIN")
 			.antMatchers(HttpMethod.GET, "/admin/getEntities").hasAnyRole("ADMIN","REPRESENTATIVE","USER")
 			.antMatchers(HttpMethod.POST,"/projects/createProject").hasAnyRole("ADMIN","REPRESENTATIVE")
+			.antMatchers(HttpMethod.GET,"/projects/getSummaryOdsAndCollaborationArea").permitAll()
+			.antMatchers(HttpMethod.GET,"/projects/searchProjectsBy").permitAll()
+			.antMatchers(HttpMethod.GET,"/projects/project/*").permitAll()
+			.antMatchers(HttpMethod.GET,"/projects/getLogo").permitAll()
 			.antMatchers(HttpMethod.GET, "/admin/getMyEntity").hasAnyRole("ADMIN","REPRESENTATIVE")
-			.anyRequest().denyAll();
+			.anyRequest().permitAll();
 
 	}
 	

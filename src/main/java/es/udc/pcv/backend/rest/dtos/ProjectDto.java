@@ -42,6 +42,8 @@ public class ProjectDto {
   private Long entityId;
   @NotNull(groups={ProjectDto.AllValidations.class})
   private Long areaId;
+  private String entityName;
+  private String areaName;
 
   public ProjectDto() {
   }
@@ -178,5 +180,21 @@ public class ProjectDto {
 
   public void setAreaId(Long areaId) {
     this.areaId = areaId;
+  }
+
+  public String getEntityName() {
+    return entityName;
+  }
+
+  public void setEntityName(String entityName) {
+    this.entityName = entityName;
+  }
+
+  public String getAreaName() {
+    return areaName;
+  }
+
+  public void setAreaName(String areaName) {
+    this.areaName = areaName;
   }
 }
