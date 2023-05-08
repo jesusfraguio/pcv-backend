@@ -1,10 +1,8 @@
 package es.udc.pcv.backend.test.model.services;
 
 import es.udc.pcv.backend.model.entities.CollaborationArea;
-import es.udc.pcv.backend.model.entities.CollaborationAreaDao;
 import es.udc.pcv.backend.model.entities.Entidad;
 import es.udc.pcv.backend.model.entities.Ods;
-import es.udc.pcv.backend.model.entities.OdsDao;
 import es.udc.pcv.backend.model.entities.Project;
 import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.entities.Task;

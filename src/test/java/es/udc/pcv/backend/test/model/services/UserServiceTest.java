@@ -1,14 +1,25 @@
 package es.udc.pcv.backend.test.model.services;
 
+import es.udc.pcv.backend.model.entities.CollaborationArea;
 import es.udc.pcv.backend.model.entities.Entidad;
 import es.udc.pcv.backend.model.entities.EntidadDao;
+import es.udc.pcv.backend.model.entities.Ods;
+import es.udc.pcv.backend.model.entities.Participation;
+import es.udc.pcv.backend.model.entities.Project;
 import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.services.AdminService;
+import es.udc.pcv.backend.model.services.RepresentativeService;
+import es.udc.pcv.backend.model.services.VolunteerService;
 import es.udc.pcv.backend.model.to.EntityData;
 import es.udc.pcv.backend.model.to.UserWithRepresentative;
 import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.entities.Volunteer;
+import es.udc.pcv.backend.rest.dtos.ParticipationDto;
+import es.udc.pcv.backend.rest.dtos.ProjectDto;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,6 +47,12 @@ public class UserServiceTest {
 
 	@Autowired
 	private AdminService adminService;
+
+	@Autowired
+	private RepresentativeService representativeService;
+
+	@Autowired
+	private VolunteerService volunteerService;
 	
 	private User createUser(String email) {
 		return new User("password",email);
@@ -50,7 +67,13 @@ public class UserServiceTest {
 		return new Volunteer("password","st","st","st,",
 				LocalDate.of(2000,11,9));
 	}
-	
+
+	private ProjectDto createProjectDto(String name, List<String> task, List<Long> ods,long entityId, long areaId){
+		ProjectDto projectDto = new ProjectDto(null,name,"Descripción corta","Detalle de las tareas","A Coruña","Lunes y Martes de 10:30 a 12:30",
+				10,"Sin preferencias",false,true,task,ods,entityId,areaId);
+		return projectDto;
+	}
+
 	@Test
 	public void testSignUpAndLoginFromId() throws DuplicateInstanceException, InstanceNotFoundException {
 		
@@ -201,6 +224,40 @@ public class UserServiceTest {
 		assertThrows(DuplicateInstanceException.class, () -> userService.createRepresentative(new UserWithRepresentative(user.getPassword(),user.getEmail(),representative.getName(),
 				representative.getSurname(),representative.getPhone(),representative.getEntity().getId())));
 
+	}
+
+	@Test
+	public void createParticipation()
+			throws InstanceNotFoundException, DuplicateInstanceException, IncorrectLoginException {
+		User userBasic = createUser("user@gmail.com");
+		String clearPassword = userBasic.getPassword();
+
+		Volunteer volunteer = createVolunteer();
+		userService.signUp(new UserWithVolunteer(userBasic,volunteer));
+
+		User loggedInUser = userService.login(userBasic.getEmail(), clearPassword);
+
+		User user = createUser("representante6@gmail.com");
+		Representative representative = createRepresentative();
+		long userId = userService.createRepresentative(new UserWithRepresentative(user.getPassword(),user.getEmail(),representative.getName(),
+				representative.getSurname(),representative.getPhone(),representative.getEntity().getId())).getId();
+		List<Ods> odsList = representativeService.getAllOds();
+		List<CollaborationArea> collaborationAreas = representativeService.getAllCollaborationArea();
+		List<String> tasks = new ArrayList<>();
+		List<Long> itemIds = odsList.stream()
+				.filter(item -> (item.getNumber() == 2) || (item.getNumber() == 1))
+				.map(Ods::getId)
+				.collect(Collectors.toList());
+		tasks.add("Task 1");
+		tasks.add("Cocinar y preparar comidas");
+		tasks.add("Envasar y distribuir alimentos a personas necesitadas");
+		ProjectDto projectDto = createProjectDto("Proyecto X",tasks,itemIds,representative.getEntity().getId(),collaborationAreas.get(0).getId());
+		Project project = representativeService.createProject(projectDto,userId);
+		ParticipationDto participationDto = new ParticipationDto(false,project.getId(),loggedInUser.getId());
+		Participation participation = volunteerService.createParticipation(participationDto);
+		assertEquals(participation.getProject(),project);
+		assertEquals(participation.getVolunteer().getUser().getId(),loggedInUser.getId());
+		assertFalse(participation.isRecommended());
 	}
 
 }
