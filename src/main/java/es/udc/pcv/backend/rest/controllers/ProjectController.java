@@ -4,6 +4,7 @@ import es.udc.pcv.backend.model.entities.Project;
 import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.entities.User;
 import es.udc.pcv.backend.model.entities.Volunteer;
+import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
 import es.udc.pcv.backend.model.exceptions.DuplicateInstanceException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.services.Block;
@@ -123,7 +124,7 @@ public class ProjectController {
   @PostMapping("/createMyParticipation")
   public ResponseEntity<ParticipationDto> createMyParticipation(
       @Validated({ParticipationDto.AllValidations.class}) @RequestBody ParticipationDto participationDto)
-      throws InstanceNotFoundException {
+      throws InstanceNotFoundException, AlreadyParticipatingException {
 
     ParticipationDto savedParticipationDto = entityConversor.toParticipationDto(volunteerService.createParticipation(participationDto));
 

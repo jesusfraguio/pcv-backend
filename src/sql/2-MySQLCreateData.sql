@@ -8,6 +8,7 @@ INSERT INTO "User" (password,email,role) VALUES('$2a$04$UQ7I9PEstZF99Y2NjePjYuoE
 INSERT INTO "User" (password,email,role) VALUES('$2a$04$UQ7I9PEstZF99Y2NjePjYuoE00g9s9mQmKOriS5vXya0yfAcfcLEG','usuario2@gmail.com',0);
 INSERT INTO "User" (password,email,role) VALUES('$2a$04$UQ7I9PEstZF99Y2NjePjYuoE00g9s9mQmKOriS5vXya0yfAcfcLEG','usuario3@gmail.com',0);
 INSERT INTO "User" (password,email,role) VALUES('$2a$04$UQ7I9PEstZF99Y2NjePjYuoE00g9s9mQmKOriS5vXya0yfAcfcLEG','admin@pcv.es',1);
+INSERT INTO "Representative" (id,phone,surname,"entityId") VALUES(4,null,'admin',1);
 
 
 INSERT INTO "VolunteerRecord" (name,surname,locality,phone,birth,"userId","isDeleted") VALUES('Pedro','Sánchez Sánchez','A Coruña','600111222','2000-04-08',1,false);

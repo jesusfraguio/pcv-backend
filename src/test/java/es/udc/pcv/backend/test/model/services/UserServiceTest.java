@@ -7,6 +7,7 @@ import es.udc.pcv.backend.model.entities.Ods;
 import es.udc.pcv.backend.model.entities.Participation;
 import es.udc.pcv.backend.model.entities.Project;
 import es.udc.pcv.backend.model.entities.Representative;
+import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
 import es.udc.pcv.backend.model.services.AdminService;
 import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.services.VolunteerService;
@@ -228,7 +229,8 @@ public class UserServiceTest {
 
 	@Test
 	public void createParticipation()
-			throws InstanceNotFoundException, DuplicateInstanceException, IncorrectLoginException {
+			throws InstanceNotFoundException, DuplicateInstanceException, IncorrectLoginException,
+			AlreadyParticipatingException {
 		User userBasic = createUser("user@gmail.com");
 		String clearPassword = userBasic.getPassword();
 

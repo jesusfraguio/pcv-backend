@@ -8,6 +8,7 @@ import es.udc.pcv.backend.model.entities.Project;
 import es.udc.pcv.backend.model.entities.ProjectDao;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.model.entities.VolunteerDao;
+import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.rest.dtos.ParticipationDto;
 import java.time.LocalDate;
@@ -29,7 +30,7 @@ public class VolunteerServiceImpl implements VolunteerService {
 
   @Override
   public Participation createParticipation(ParticipationDto participationData) throws
-      InstanceNotFoundException {
+      InstanceNotFoundException, AlreadyParticipatingException {
     Optional<Volunteer> volunteer = volunteerDao.findByUserId(participationData.getVolunteerId());
     if(!volunteer.isPresent()){
       throw new InstanceNotFoundException("project.entities.volunteer",participationData.getVolunteerId());
@@ -37,6 +38,9 @@ public class VolunteerServiceImpl implements VolunteerService {
     Optional<Project> project = projectDao.findById(participationData.getProjectId());
     if(!project.isPresent()){
       throw new InstanceNotFoundException("project.entities.project",participationData.getProjectId());
+    }
+    if(participationDao.findByProjectIdAndVolunteerId(project.get().getId(),volunteer.get().getId()).isPresent()){
+      throw new AlreadyParticipatingException();
     }
     return participationDao.save(new Participation(0, Participation.ParticipationState.PENDING,
         participationData.isRecommended(), LocalDate.now(),project.get(),volunteer.get()));

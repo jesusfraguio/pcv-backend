@@ -117,7 +117,7 @@ CREATE INDEX "VolunteerRecordIndexByDni" ON "VolunteerRecord" ("dni") WHERE "dni
 CREATE INDEX "VolunteerRecordIndexByUserId" ON "VolunteerRecord" ("userId") WHERE "dni" IS NULL;
 
 CREATE TABLE "Representative" (
-    "phone" VARCHAR(20) NOT NULL,
+    "phone" VARCHAR(20),
     "name" VARCHAR(60),
     "surname" VARCHAR(60),
     "id" BIGINT NOT NULL PRIMARY KEY,

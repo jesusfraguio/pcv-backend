@@ -1,6 +1,7 @@
 package es.udc.pcv.backend;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.MessageSource;
@@ -56,7 +57,7 @@ public class Application {
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
-        // configure the ObjectMapper here
+        objectMapper.registerModule(new JavaTimeModule());
         return objectMapper;
     }
 
