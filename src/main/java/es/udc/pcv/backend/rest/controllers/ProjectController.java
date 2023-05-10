@@ -4,11 +4,13 @@ import es.udc.pcv.backend.model.entities.Project;
 import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.entities.User;
 import es.udc.pcv.backend.model.entities.Volunteer;
+import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
 import es.udc.pcv.backend.model.exceptions.DuplicateInstanceException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.services.Block;
 import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.services.UserService;
+import es.udc.pcv.backend.model.services.VolunteerService;
 import es.udc.pcv.backend.model.to.ResourceWithType;
 import es.udc.pcv.backend.model.to.UserWithRepresentative;
 import es.udc.pcv.backend.model.to.UserWithVolunteer;
@@ -17,6 +19,7 @@ import es.udc.pcv.backend.rest.dtos.EntityConversor;
 import es.udc.pcv.backend.rest.dtos.MessageDTO;
 import es.udc.pcv.backend.rest.dtos.OdsWithCollaborationAreaDto;
 import es.udc.pcv.backend.rest.dtos.PageableDto;
+import es.udc.pcv.backend.rest.dtos.ParticipationDto;
 import es.udc.pcv.backend.rest.dtos.ProjectDto;
 import es.udc.pcv.backend.rest.dtos.ProjectFiltersDto;
 import es.udc.pcv.backend.rest.dtos.ProjectSummaryDto;
@@ -49,6 +52,9 @@ public class ProjectController {
 
   @Autowired
   private RepresentativeService representativeService;
+
+  @Autowired
+  private VolunteerService volunteerService;
 
   @Autowired
   private EntityConversor entityConversor;
@@ -112,5 +118,21 @@ public class ProjectController {
     return ResponseEntity.ok()
         .contentType(mediaType)
         .body(resource.getResource());
+  }
+
+  @Operation(summary = "create a participation")
+  @PostMapping("/createMyParticipation")
+  public ResponseEntity<ParticipationDto> createMyParticipation(
+      @Validated({ParticipationDto.AllValidations.class}) @RequestBody ParticipationDto participationDto)
+      throws InstanceNotFoundException, AlreadyParticipatingException {
+
+    ParticipationDto savedParticipationDto = entityConversor.toParticipationDto(volunteerService.createParticipation(participationDto));
+
+    URI location = ServletUriComponentsBuilder
+        .fromCurrentRequest().path("/{id}")
+        .buildAndExpand(participationDto.getId()).toUri();
+
+    return ResponseEntity.created(location).body(savedParticipationDto);
+
   }
 }

@@ -3,6 +3,7 @@ package es.udc.pcv.backend.rest.dtos;
 import es.udc.pcv.backend.model.entities.CollaborationArea;
 import es.udc.pcv.backend.model.entities.Entidad;
 import es.udc.pcv.backend.model.entities.Ods;
+import es.udc.pcv.backend.model.entities.Participation;
 import es.udc.pcv.backend.model.entities.Project;
 import es.udc.pcv.backend.model.entities.Task;
 import es.udc.pcv.backend.model.services.Block;
@@ -60,5 +61,10 @@ public interface EntityConversor {
   List<OdsSummaryDTO> toOdsSummaryDto(List<Ods> ods);
 
   List<CollaborationAreaDTO> toCollaborationAreaDTO(List<CollaborationArea> collaborationAreas);
+
+  @Mapping(target = "projectId", source = "project.id")
+  @Mapping(target = "volunteerId", source = "volunteer.id")
+  @Mapping(target = "status", source = "state")
+  ParticipationDto toParticipationDto(Participation participation);
 
 }
