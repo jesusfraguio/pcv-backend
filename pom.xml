@@ -21,7 +21,7 @@
         <org.mapstruct.version>1.5.3.Final</org.mapstruct.version>
         <!--  Data source properties -->
         <dataSource.user>pcv</dataSource.user>
-        <dataSource.password>pcv</dataSource.password>
+        <dataSource.password>${env.PCV_DATABASE_PASSWORD}</dataSource.password>
         <email.address>${env.EMAIL_ADDRESS}</email.address>
         <email.password>${env.EMAIL_PASSWORD}</email.password>
         <jwt.signKey>${env.SIGN_KEY}</jwt.signKey>
@@ -55,10 +55,10 @@
                 <jdbcDriver.className>org.postgresql.Driver</jdbcDriver.className>
                 <jdbcDriver.dialect>org.hibernate.dialect.PostgreSQL95Dialect</jdbcDriver.dialect>
                 <!--  Data source properties -->
-                <dataSource.baseUrl>jdbc:postgresql://localhost:5432/pcv</dataSource.baseUrl>
-                <!--<dataSource.baseUrl>jdbc:postgresql://dpg-cgk0kgm4dad69r7kb3cg-a.frankfurt-postgres.render.com/pcv</dataSource.baseUrl>-->
+                <!--<dataSource.baseUrl>jdbc:postgresql://localhost:5432/pcv</dataSource.baseUrl>-->
+                <dataSource.baseUrl>jdbc:postgresql://dpg-cgk0kgm4dad69r7kb3cg-a.frankfurt-postgres.render.com/pcv</dataSource.baseUrl>
                 <dataSource.url>${dataSource.baseUrl}?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=Europe/Madrid</dataSource.url>
-                <testDataSource.url>jdbc:postgresql://localhost:5433/pcvtest?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=Europe/Madrid</testDataSource.url>
+                <!--<testDataSource.url>jdbc:postgresql://localhost:5433/pcvtest?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=Europe/Madrid</testDataSource.url>-->
                 <dataSource.createTablesScript>1-MySQLCreateTables.sql</dataSource.createTablesScript>
                 <dataSource.createDataScript>2-MySQLCreateData.sql</dataSource.createDataScript>
             </properties>
@@ -215,6 +215,7 @@
                         </includes>
                     </fileset>
                 </configuration>
+                <!--
                 <executions>
                     <execution>
                         <id>create-tables-for-testing</id>
@@ -239,6 +240,7 @@
                         </configuration>
                     </execution>
                 </executions>
+                -->
             </plugin>
 
             <plugin>
