@@ -43,4 +43,5 @@ project:
   jwt:
     signKey: '@jwt.signKey@'
     expirationMinutes: 1440
-
+server:
+  port: 8080

@@ -3,8 +3,10 @@ package es.udc.pcv.backend.rest.dtos;
 import es.udc.pcv.backend.model.entities.CollaborationArea;
 import es.udc.pcv.backend.model.entities.Entidad;
 import es.udc.pcv.backend.model.entities.Ods;
+import es.udc.pcv.backend.model.entities.Participation;
 import es.udc.pcv.backend.model.entities.Project;
 import es.udc.pcv.backend.model.entities.Task;
+import es.udc.pcv.backend.model.services.Block;
 import es.udc.pcv.backend.model.to.EntityData;
 import java.util.List;
 import java.util.Set;
@@ -44,7 +46,17 @@ public interface EntityConversor {
   @Mapping(target = "entityId", source = "entity.id")
   @Mapping(target = "areaId", source = "collaborationArea.id")
   @Mapping(target = "ods", source = "ods", qualifiedByName = "mapOdsToIds")
+  @Mapping(target = "entityName", source="entity.name")
+  @Mapping(target = "areaName", source = "collaborationArea.name")
   ProjectDto toProjectDto(Project project);
+
+  @Mapping(target = "entityName", source = "entity.name")
+  @Mapping(target = "areaName", source = "collaborationArea.name")
+  @Mapping(target = "entityId", source = "entity.id")
+  @Mapping(target = "areaId", source = "collaborationArea.id")
+  ProjectSummaryDto toProjectSummaryDto(Project project);
+
+  Block<ProjectSummaryDto> toProjectBlockDto(Block<Project> projectBlock);
 
   List<OdsSummaryDTO> toOdsSummaryDto(List<Ods> ods);
 

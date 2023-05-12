@@ -24,7 +24,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 
-		http.cors().and().csrf().disable()
+		http.requiresChannel()
+			.requestMatchers(r -> r.getHeader("X-Forwarded-Proto") != null)
+			.requiresSecure()
+			.and()
+			.cors().and().csrf().disable()
 			.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 			.addFilter(new JwtFilter(authenticationManager(), jwtGenerator))
 			.authorizeRequests()
@@ -39,7 +43,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers(HttpMethod.POST, "/admin/createEntity").hasRole("ADMIN")
 			.antMatchers(HttpMethod.GET, "/admin/getEntities").hasAnyRole("ADMIN","REPRESENTATIVE","USER")
 			.antMatchers(HttpMethod.POST,"/projects/createProject").hasAnyRole("ADMIN","REPRESENTATIVE")
+			.antMatchers(HttpMethod.GET,"/projects/getSummaryOdsAndCollaborationArea").permitAll()
+			.antMatchers(HttpMethod.GET,"/projects/searchProjectsBy").permitAll()
+			.antMatchers(HttpMethod.GET,"/projects/project/*").permitAll()
+			.antMatchers(HttpMethod.GET,"/projects/getLogo").permitAll()
+			.antMatchers(HttpMethod.POST,"/projects/createMyParticipation").hasAnyRole("ADMIN","REPRESENTATIVE","USER")
 			.antMatchers(HttpMethod.GET, "/admin/getMyEntity").hasAnyRole("ADMIN","REPRESENTATIVE")
+			.antMatchers(HttpMethod.GET, "/participation/my").hasAnyRole("ADMIN","REPRESENTATIVE","USER")
 			.anyRequest().denyAll();
 
 	}
