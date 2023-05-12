@@ -62,9 +62,4 @@ public interface EntityConversor {
 
   List<CollaborationAreaDTO> toCollaborationAreaDTO(List<CollaborationArea> collaborationAreas);
 
-  @Mapping(target = "projectId", source = "project.id")
-  @Mapping(target = "volunteerId", source = "volunteer.id")
-  @Mapping(target = "status", source = "state")
-  ParticipationDto toParticipationDto(Participation participation);
-
 }
