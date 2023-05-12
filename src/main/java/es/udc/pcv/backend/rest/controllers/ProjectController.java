@@ -19,6 +19,7 @@ import es.udc.pcv.backend.rest.dtos.EntityConversor;
 import es.udc.pcv.backend.rest.dtos.MessageDTO;
 import es.udc.pcv.backend.rest.dtos.OdsWithCollaborationAreaDto;
 import es.udc.pcv.backend.rest.dtos.PageableDto;
+import es.udc.pcv.backend.rest.dtos.ParticipationConversor;
 import es.udc.pcv.backend.rest.dtos.ParticipationDto;
 import es.udc.pcv.backend.rest.dtos.ProjectDto;
 import es.udc.pcv.backend.rest.dtos.ProjectFiltersDto;
@@ -58,6 +59,9 @@ public class ProjectController {
 
   @Autowired
   private EntityConversor entityConversor;
+
+  @Autowired
+  private ParticipationConversor participationConversor;
 
   @Operation(summary = "create a project")
   @PostMapping("/createProject")
@@ -126,7 +130,7 @@ public class ProjectController {
       @Validated({ParticipationDto.AllValidations.class}) @RequestBody ParticipationDto participationDto)
       throws InstanceNotFoundException, AlreadyParticipatingException {
 
-    ParticipationDto savedParticipationDto = entityConversor.toParticipationDto(volunteerService.createParticipation(participationDto));
+    ParticipationDto savedParticipationDto = participationConversor.toParticipationDto(volunteerService.createParticipation(participationDto));
 
     URI location = ServletUriComponentsBuilder
         .fromCurrentRequest().path("/{id}")
