@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS "Participation";
 DROP TABLE IF EXISTS "VolunteerRecord";
 DROP TABLE IF EXISTS "Representative";
 DROP TABLE IF EXISTS "Project_Ods";
@@ -116,11 +117,23 @@ CREATE INDEX "VolunteerRecordIndexByDni" ON "VolunteerRecord" ("dni") WHERE "dni
 CREATE INDEX "VolunteerRecordIndexByUserId" ON "VolunteerRecord" ("userId") WHERE "dni" IS NULL;
 
 CREATE TABLE "Representative" (
-    "phone" VARCHAR(20) NOT NULL,
+    "phone" VARCHAR(20),
     "name" VARCHAR(60),
     "surname" VARCHAR(60),
     "id" BIGINT NOT NULL PRIMARY KEY,
     "entityId" BIGINT NOT NULL,
     CONSTRAINT "RepresentativeEntityForeignKey" FOREIGN KEY("entityId") REFERENCES "Entity" (id),
     CONSTRAINT "RepresentativeUserForeignKey" FOREIGN KEY ("id") REFERENCES "User" ("id")
+);
+
+CREATE TABLE "Participation" (
+    "id" BIGSERIAL PRIMARY KEY,
+    "totalHours" INTEGER,
+    "state" VARCHAR(15) CHECK (state IN ('PENDING', 'SCHEDULED', 'REJECTED', 'APPROVED', 'ACCEPTED', 'DELETED')),
+    "isRecommended" BOOLEAN NOT NULL,
+    "registerDate" DATE NOT NULL,
+    "projectId" BIGINT NOT NULL,
+    "volunteerRecordId" BIGINT NOT NULL,
+    CONSTRAINT "ParticipationProjectForeignKey" FOREIGN KEY("projectId") REFERENCES "Project" (id),
+    CONSTRAINT "ParticipationVolunteerRecordForeignKey" FOREIGN KEY("volunteerRecordId") REFERENCES "VolunteerRecord" (id)
 );

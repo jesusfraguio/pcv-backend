@@ -1,5 +1,6 @@
 package es.udc.pcv.backend.rest.common;
 
+import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
@@ -24,9 +25,21 @@ public class CommonControllerAdvice {
 	private final static String INSTANCE_NOT_FOUND_EXCEPTION_CODE = "project.exceptions.InstanceNotFoundException";
 	private final static String DUPLICATE_INSTANCE_EXCEPTION_CODE = "project.exceptions.DuplicateInstanceException";
 	private final static String PERMISSION_EXCEPTION_CODE = "project.exceptions.PermissionException";
+	private final static String ALREADY_PARTICIPATING_EXCEPTION_CODE = "project.exceptions.AlreadyParticipatingException";
 	
 	@Autowired
 	private MessageSource messageSource;
+
+	@ExceptionHandler(IllegalArgumentException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ResponseBody
+	public ErrorsDto handleIllegalArgumentException(IllegalArgumentException exception, Locale locale) {
+
+		String errorMessage = messageSource.getMessage(exception.getMessage(), null, exception.getMessage(), locale);
+
+		return new ErrorsDto(errorMessage);
+
+	}
 
 	@ExceptionHandler(IOException.class)
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -84,6 +97,18 @@ public class CommonControllerAdvice {
 
 		return new ErrorsDto(errorMessage);
 		
+	}
+
+	@ExceptionHandler(AlreadyParticipatingException.class)
+	@ResponseStatus(HttpStatus.CONFLICT)
+	@ResponseBody
+	public ErrorsDto handleAlreadyParticipatingException(AlreadyParticipatingException exception, Locale locale) {
+
+		String errorMessage = messageSource.getMessage(ALREADY_PARTICIPATING_EXCEPTION_CODE, null, ALREADY_PARTICIPATING_EXCEPTION_CODE,
+				locale);
+
+		return new ErrorsDto(errorMessage);
+
 	}
 
 }
