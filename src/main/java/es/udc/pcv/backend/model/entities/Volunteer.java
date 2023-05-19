@@ -22,7 +22,8 @@ public class Volunteer {
     private String locality;
     private String phone;
     private LocalDate birth;
-    private boolean isDeleted;
+    private boolean isDeleted = Boolean.FALSE;
+    private Boolean isVerified = Boolean.FALSE;
     private User user;
 
     public Volunteer() {
@@ -117,6 +118,15 @@ public class Volunteer {
 
   public void setDeleted(boolean deleted) {
     isDeleted = deleted;
+  }
+
+  @Column(name = "\"isVerified\"")
+  public Boolean getVerified() {
+    return isVerified;
+  }
+
+  public void setVerified(Boolean verified) {
+    isVerified = verified;
   }
 
   @OneToOne(fetch = FetchType.LAZY,optional = true)

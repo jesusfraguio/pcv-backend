@@ -110,6 +110,7 @@ CREATE TABLE "VolunteerRecord" (
     "birth" DATE NOT NULL,
     "userId" BIGINT REFERENCES "User" (id),
     "isDeleted" BOOLEAN NOT NULL,
+    "isVerified" BOOLEAN,
     CONSTRAINT "VolunteerRecordDniUniqueKey" UNIQUE ("dni")
 );
 
