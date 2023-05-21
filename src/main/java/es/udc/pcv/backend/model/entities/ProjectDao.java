@@ -9,4 +9,5 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 public interface ProjectDao extends PagingAndSortingRepository<Project, Long>,
     JpaSpecificationExecutor<Project> {
   Page<Project> findAll(Specification<Project> spec, Pageable pageable);
+  Page<Project> findAllByEntityId(Long entityId, Pageable pageable);
 }

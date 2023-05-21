@@ -6,8 +6,9 @@ import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
+import org.mapstruct.NullValueCheckStrategy;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
 public interface UserConversor {
   @Named("roleToString")
   String roleToString(User.RoleType role);
@@ -15,6 +16,11 @@ public interface UserConversor {
   @Mapping(source = "user.role", target = "role", qualifiedByName = "roleToString")
   @Mapping(source = "user.id", target = "id")
   UserDto toUserDto(User user, Volunteer volunteer);
+
+  @Mapping(target = "isVerified", source = "volunteer.verified")
+  @Mapping(source = "volunteer.id", target = "volunteerId")
+  @Mapping(source = "user.email", target = "email")
+  VolunteerSummaryDto toUserSummaryDto(User user, Volunteer volunteer);
 
   @BeanMapping(ignoreByDefault = true)
   @Mapping(source = "password", target = "password")

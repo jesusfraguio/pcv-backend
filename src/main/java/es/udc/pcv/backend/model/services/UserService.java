@@ -1,6 +1,7 @@
 package es.udc.pcv.backend.model.services;
 
 import es.udc.pcv.backend.model.entities.Representative;
+import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.model.to.UserWithRepresentative;
 import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.exceptions.DuplicateInstanceException;
@@ -28,5 +29,7 @@ public interface UserService {
 	void sendEmailWithToken(User user, String token);
 
 	User addNewPassword(Long id, String newPassword) throws InstanceNotFoundException;
+
+	UserWithVolunteer getSummaryProfile(Long representativeId, Long userId) throws InstanceNotFoundException;
 
 }

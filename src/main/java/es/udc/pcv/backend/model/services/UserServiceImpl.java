@@ -1,6 +1,8 @@
 package es.udc.pcv.backend.model.services;
 
+import es.udc.pcv.backend.model.entities.Entidad;
 import es.udc.pcv.backend.model.entities.EntidadDao;
+import es.udc.pcv.backend.model.entities.ParticipationDao;
 import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.entities.RepresentativeDao;
 import es.udc.pcv.backend.model.to.UserWithRepresentative;
@@ -49,6 +51,9 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private RepresentativeDao representativeDao;
+
+	@Autowired
+	private ParticipationDao participationDao;
 
 	@Value("${spring.mail.username}")
 	private String originEmail;
@@ -174,6 +179,22 @@ public class UserServiceImpl implements UserService {
 		User user = permissionChecker.checkUser(id);
 		user.setPassword(passwordEncoder.encode(newPassword));
 		return user;
+	}
+
+	@Override
+	public UserWithVolunteer getSummaryProfile(Long representativeId, Long userId)
+			throws InstanceNotFoundException {
+		Entidad entidad = representativeDao.findById(representativeId).get().getEntity();
+		Optional<Volunteer> volunteer = volunteerDao.findById(userId);
+		if(!volunteer.isPresent()){
+			throw new InstanceNotFoundException("project.entities.volunteer",userId);
+		}
+		//no relationship beetween entity and volunteer
+		if(!participationDao.existsByProjectEntityIdAndVolunteerId(entidad.getId(),userId)){
+			throw new InstanceNotFoundException("project.entities.volunteer",userId);
+		}
+		User user = volunteer.get().getUser();
+		return new UserWithVolunteer(user,volunteer.get());
 	}
 
 }
