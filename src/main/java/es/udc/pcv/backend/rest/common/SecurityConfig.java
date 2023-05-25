@@ -54,6 +54,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers(HttpMethod.GET, "/participation/my").hasAnyRole("ADMIN","REPRESENTATIVE","USER")
 			.antMatchers(HttpMethod.GET,"/projects/myEntityProjects").hasAnyRole("ADMIN","REPRESENTATIVE")
 			.antMatchers(HttpMethod.GET,"/participation/getAllProjectParticipations/*").hasAnyRole("ADMIN","REPRESENTATIVE")
+			.antMatchers(HttpMethod.GET,"/participation/getAllPendingParticipations").hasAnyRole("ADMIN","REPRESENTATIVE")
+			.antMatchers(HttpMethod.PATCH, "/participation/*").hasAnyRole("ADMIN","REPRESENTATIVE")
 			.anyRequest().denyAll();
 
 	}
