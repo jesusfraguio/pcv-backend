@@ -7,15 +7,19 @@ public class VolunteerSummaryDto {
   private Boolean isVerified;
   private String name;
   private String surname;
+  private Boolean hasCertFile;
+  private Boolean hasHarassmentFile;
 
   public VolunteerSummaryDto(Long volunteerId, String email, String phone,
-                             Boolean isVerified, String name, String surname) {
+                             Boolean isVerified, String name, String surname, Boolean hasCertFile, Boolean hasHarassmentFile) {
     this.volunteerId = volunteerId;
     this.email = email;
     this.phone = phone;
     this.isVerified = isVerified;
     this.name = name;
     this.surname = surname;
+    this.hasCertFile = hasCertFile;
+    this.hasHarassmentFile = hasHarassmentFile;
   }
 
   public Long getVolunteerId() {
@@ -64,5 +68,21 @@ public class VolunteerSummaryDto {
 
   public void setSurname(String surname) {
     this.surname = surname;
+  }
+
+  public Boolean getHasCertFile() {
+    return hasCertFile;
+  }
+
+  public void setHasCertFile(Boolean hasCertFile) {
+    this.hasCertFile = hasCertFile;
+  }
+
+  public Boolean getHasHarassmentFile() {
+    return hasHarassmentFile;
+  }
+
+  public void setHasHarassmentFile(Boolean hasHarassmentFile) {
+    this.hasHarassmentFile = hasHarassmentFile;
   }
 }

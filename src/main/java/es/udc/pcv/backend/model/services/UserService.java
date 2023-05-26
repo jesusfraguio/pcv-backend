@@ -9,6 +9,7 @@ import es.udc.pcv.backend.model.exceptions.IncorrectLoginException;
 import es.udc.pcv.backend.model.exceptions.IncorrectPasswordException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.entities.User;
+import es.udc.pcv.backend.rest.dtos.VolunteerEntityFilesDto;
 
 public interface UserService {
 	
@@ -32,4 +33,5 @@ public interface UserService {
 
 	UserWithVolunteer getSummaryProfile(Long representativeId, Long userId) throws InstanceNotFoundException;
 
+  	VolunteerEntityFilesDto findVolunteerEntityFiles(Long representativeId, Long id) throws InstanceNotFoundException;
 }

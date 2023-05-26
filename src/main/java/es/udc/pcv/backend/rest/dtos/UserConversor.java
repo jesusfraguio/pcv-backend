@@ -17,10 +17,12 @@ public interface UserConversor {
   @Mapping(source = "user.id", target = "id")
   UserDto toUserDto(User user, Volunteer volunteer);
 
+  @Mapping(target = "hasHarassmentFile", source = "hasHarassmentFile")
+  @Mapping(target = "hasCertFile", source = "hasCertFile")
   @Mapping(target = "isVerified", source = "volunteer.verified")
   @Mapping(source = "volunteer.id", target = "volunteerId")
   @Mapping(source = "user.email", target = "email")
-  VolunteerSummaryDto toUserSummaryDto(User user, Volunteer volunteer);
+  VolunteerSummaryDto toUserSummaryDto(User user, Volunteer volunteer, Boolean hasHarassmentFile, Boolean hasCertFile);
 
   @BeanMapping(ignoreByDefault = true)
   @Mapping(source = "password", target = "password")

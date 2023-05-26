@@ -4,6 +4,7 @@ import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.rest.dtos.NewPasswordParamsDto;
 import es.udc.pcv.backend.rest.dtos.UserConversor;
+import es.udc.pcv.backend.rest.dtos.VolunteerEntityFilesDto;
 import es.udc.pcv.backend.rest.dtos.VolunteerSummaryDto;
 import java.net.URI;
 import java.util.Locale;
@@ -142,7 +143,8 @@ public class UserController {
 	@GetMapping("/{id}")
 	public VolunteerSummaryDto getUserSummaryProfile(@RequestAttribute Long userId, @PathVariable Long id) throws InstanceNotFoundException{
 		UserWithVolunteer userWithVolunteer = userService.getSummaryProfile(userId,id);
-		return userConversor.toUserSummaryDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer());
+		VolunteerEntityFilesDto hasFiles = userService.findVolunteerEntityFiles(userId, id);
+		return userConversor.toUserSummaryDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer(), hasFiles.isHasCertFile(), hasFiles.isHasHarassmentFile());
 	}
 	
 	@PostMapping("/{id}/changePassword")

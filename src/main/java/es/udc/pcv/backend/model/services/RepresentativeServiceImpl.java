@@ -225,13 +225,13 @@ public class RepresentativeServiceImpl implements RepresentativeService{
     }
     Pageable pageable;
     if(isSorted){
-      if(pageableDto.getSortValue()!=null && pageableDto.getSortValue().equals("desc")){
+      if(pageableDto.getSortOrder().equals("desc")){
         pageable = PageRequest.of(pageableDto.getPage(), pageableDto.getSize(),
-            Sort.by(pageableDto.getSortValue(), "desc"));
+            Sort.by(Sort.Direction.DESC, pageableDto.getSortValue()));
       }
       else{
         pageable = PageRequest.of(pageableDto.getPage(), pageableDto.getSize(),
-            Sort.by(pageableDto.getSortValue(), "asc"));
+            Sort.by(Sort.Direction.ASC, pageableDto.getSortValue()));
       }
     }
     else{

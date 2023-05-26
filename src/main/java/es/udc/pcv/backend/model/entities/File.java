@@ -6,6 +6,9 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Id;
 
@@ -38,6 +41,8 @@ public class File {
   private String originalName;
   private FileType fileType;
   private String extension;
+  private Entidad entidad;
+  private Volunteer volunteer;
 
   public File() {
   }
@@ -49,6 +54,16 @@ public class File {
     this.originalName = originalName;
     this.fileType = fileType;
     this.extension = extension;
+  }
+  public File(UUID id, Date date, String originalName,
+              FileType fileType, String extension, Entidad entidad, Volunteer volunteer) {
+    this.id = id;
+    this.date = date;
+    this.originalName = originalName;
+    this.fileType = fileType;
+    this.extension = extension;
+    this.entidad = entidad;
+    this.volunteer = volunteer;
   }
 
 
@@ -97,5 +112,25 @@ public class File {
 
   public void setExtension(String extension) {
     this.extension = extension;
+  }
+
+  @ManyToOne(fetch = FetchType.LAZY,optional = true)
+  @JoinColumn(name = "\"entityId\"")
+  public Entidad getEntidad() {
+    return entidad;
+  }
+
+  public void setEntidad(Entidad entidad) {
+    this.entidad = entidad;
+  }
+
+  @ManyToOne(fetch = FetchType.LAZY,optional = true)
+  @JoinColumn(name = "\"volunteerId\"")
+  public Volunteer getVolunteer() {
+    return volunteer;
+  }
+
+  public void setVolunteer(Volunteer volunteer) {
+    this.volunteer = volunteer;
   }
 }
