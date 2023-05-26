@@ -5,4 +5,6 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 
 public interface FileDao extends PagingAndSortingRepository<File, Long> {
   Optional<File> findByFileType(File.FileType fileType);
+  Optional<File> findByEntidadAndVolunteerAndFileType(Entidad entidad, Volunteer volunteer, File.FileType fileType);
+  Optional<File> findByVolunteerAndFileType(Volunteer volunteer, File.FileType fileType);
 }

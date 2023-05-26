@@ -1,3 +1,9 @@
+ALTER TABLE "File"
+DROP CONSTRAINT IF EXISTS "FileEntityForeignKey";
+
+ALTER TABLE "File"
+DROP CONSTRAINT IF EXISTS "FileVolunteerForeignKey";
+
 DROP TABLE IF EXISTS "Participation";
 DROP TABLE IF EXISTS "VolunteerRecord";
 DROP TABLE IF EXISTS "Representative";
@@ -27,7 +33,9 @@ CREATE TABLE "File"(
    "date" timestamp without time zone NOT NULL,
    "originalName" varchar(255) NOT NULL,
    "filetype" varchar(31) NOT NULL,
-   "extension" varchar(7) NOT NULL
+   "extension" varchar(7) NOT NULL,
+   "entityId" BIGINT,
+   "volunteerId" BIGINT
 );
 CREATE TABLE "Entity"(
     "id" BIGSERIAL PRIMARY KEY,
@@ -138,3 +146,7 @@ CREATE TABLE "Participation" (
     CONSTRAINT "ParticipationProjectForeignKey" FOREIGN KEY("projectId") REFERENCES "Project" (id),
     CONSTRAINT "ParticipationVolunteerRecordForeignKey" FOREIGN KEY("volunteerRecordId") REFERENCES "VolunteerRecord" (id)
 );
+
+ALTER TABLE "File" ADD CONSTRAINT "FileEntityForeignKey" FOREIGN KEY ("entityId") REFERENCES "Entity" ("id");
+
+ALTER TABLE "File" ADD CONSTRAINT "FileVolunteerForeignKey" FOREIGN KEY ("volunteerId") REFERENCES "VolunteerRecord" ("id");
