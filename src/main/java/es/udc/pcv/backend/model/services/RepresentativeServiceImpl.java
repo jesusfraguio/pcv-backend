@@ -8,6 +8,8 @@ import es.udc.pcv.backend.model.entities.File;
 import es.udc.pcv.backend.model.entities.FileDao;
 import es.udc.pcv.backend.model.entities.Ods;
 import es.udc.pcv.backend.model.entities.OdsDao;
+import es.udc.pcv.backend.model.entities.Participation;
+import es.udc.pcv.backend.model.entities.ParticipationDao;
 import es.udc.pcv.backend.model.entities.Project;
 import es.udc.pcv.backend.model.entities.ProjectDao;
 import es.udc.pcv.backend.model.entities.ProjectSpecifications;
@@ -58,6 +60,9 @@ public class RepresentativeServiceImpl implements RepresentativeService{
 
   @Autowired
   private RepresentativeDao representativeDao;
+
+  @Autowired
+  private ParticipationDao participationDao;
 
   @Autowired
   private FileDao fileDao;
@@ -126,24 +131,7 @@ public class RepresentativeServiceImpl implements RepresentativeService{
   public Block<Project> findProjectsBy(ProjectFiltersDto projectFiltersDto,
                                        PageableDto pageableDto) {
     String[] allowedSortColumns = {"name", "locality", "collaborationAreaId"};
-    boolean isSorted = pageableDto.getSortValue() != null;
-    if (pageableDto.getSortValue() != null && !Arrays.asList(allowedSortColumns).contains(pageableDto.getSortValue())) {
-      throw new IllegalArgumentException("Invalid sort value");
-    }
-    Pageable pageable;
-    if(isSorted){
-      if(pageableDto.getSortValue()!=null && pageableDto.getSortValue().equals("desc")){
-        pageable = PageRequest.of(pageableDto.getPage(), pageableDto.getSize(),
-            Sort.by(pageableDto.getSortValue(), "desc"));
-      }
-      else{
-        pageable = PageRequest.of(pageableDto.getPage(), pageableDto.getSize(),
-            Sort.by(pageableDto.getSortValue(), "asc"));
-      }
-    }
-    else{
-      pageable = PageRequest.of(pageableDto.getPage(), pageableDto.getSize());
-    }
+    Pageable pageable = pageableDtoToPageable(pageableDto,allowedSortColumns);
     Page<Project> projectsPage = projectDao.findAll(
         ProjectSpecifications.searchProjects(projectFiltersDto.getName(), projectFiltersDto.getLocality(), projectFiltersDto.getCollaborationAreaId()), pageable);
 
@@ -175,11 +163,81 @@ public class RepresentativeServiceImpl implements RepresentativeService{
   public Project getProject(long projectId) throws InstanceNotFoundException {
     Optional<Project> project = projectDao.findById(projectId);
     if(!project.isPresent()){
-      throw new InstanceNotFoundException("project.projects.project", projectId);
+      throw new InstanceNotFoundException("project.entities.project", projectId);
     }
     else{
       return project.get();
     }
+  }
+
+  @Override
+  public Block<Project> getMyEntityProjects(Long representativeId, PageableDto pageableDto)
+      throws InstanceNotFoundException {
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    if(!representative.isPresent()){
+      throw new InstanceNotFoundException("project.entities.representative",representativeId);
+    }
+    Page<Project> projectPage = projectDao.findAllByEntityId(representative.get().getEntity().getId(),
+        PageRequest.of(pageableDto.getPage(), pageableDto.getSize()));
+    return new Block<>(projectPage.getContent(),projectPage.hasNext());
+  }
+
+  @Override
+  public Block<Participation> findAllPendingParticipation(Long representativeId, PageableDto pageableDto)
+      throws InstanceNotFoundException {
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    if(!representative.isPresent()){
+      throw new InstanceNotFoundException("project.entities.representative",representativeId);
+    }
+    Page<Participation> participationPage = participationDao.findAllByProjectEntityIdAndState(
+        representative.get().getEntity().getId(),
+        Participation.ParticipationState.PENDING,PageRequest.of(pageableDto.getPage(), pageableDto.getSize()));
+
+    return new Block<>(participationPage.getContent(),participationPage.hasNext());
+  }
+
+  @Override
+  public Block<Participation> findAllProjectParticipation(Long representativeId, Long projectId, PageableDto pageableDto)
+      throws InstanceNotFoundException {
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    if(!representative.isPresent()){
+      throw new InstanceNotFoundException("project.entities.representative",representativeId);
+    }
+    Project project = getProject(projectId);
+    if(project.getEntity().getId()!=representative.get().getEntity().getId()){
+      // Administrador no podra ver participaciones de otras entidades
+      throw new InstanceNotFoundException("project.entities.project", projectId);
+    }
+
+    String[] allowedSortColumns = {"state", "volunteerSurname", "volunteerName", "totalHours"};
+
+    Pageable pageable = pageableDtoToPageable(pageableDto, allowedSortColumns);
+    Page<Participation> participationPage = participationDao.findAllByProjectId(
+        projectId, pageable);
+
+    return new Block<>(participationPage.getContent(),participationPage.hasNext());
+  }
+
+  private Pageable pageableDtoToPageable(PageableDto pageableDto, String[] allowedSortColumns){
+    boolean isSorted = pageableDto.getSortValue() != null;
+    if (pageableDto.getSortValue() != null && !Arrays.asList(allowedSortColumns).contains(pageableDto.getSortValue())) {
+      throw new IllegalArgumentException("Invalid sort value");
+    }
+    Pageable pageable;
+    if(isSorted){
+      if(pageableDto.getSortOrder().equals("desc")){
+        pageable = PageRequest.of(pageableDto.getPage(), pageableDto.getSize(),
+            Sort.by(Sort.Direction.DESC, pageableDto.getSortValue()));
+      }
+      else{
+        pageable = PageRequest.of(pageableDto.getPage(), pageableDto.getSize(),
+            Sort.by(Sort.Direction.ASC, pageableDto.getSortValue()));
+      }
+    }
+    else{
+      pageable = PageRequest.of(pageableDto.getPage(), pageableDto.getSize());
+    }
+    return pageable;
   }
 
 

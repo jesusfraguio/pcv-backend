@@ -1,6 +1,7 @@
 package es.udc.pcv.backend.model.services;
 
 import es.udc.pcv.backend.model.entities.Representative;
+import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.model.to.UserWithRepresentative;
 import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.exceptions.DuplicateInstanceException;
@@ -8,6 +9,7 @@ import es.udc.pcv.backend.model.exceptions.IncorrectLoginException;
 import es.udc.pcv.backend.model.exceptions.IncorrectPasswordException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.entities.User;
+import es.udc.pcv.backend.rest.dtos.VolunteerEntityFilesDto;
 
 public interface UserService {
 	
@@ -29,4 +31,7 @@ public interface UserService {
 
 	User addNewPassword(Long id, String newPassword) throws InstanceNotFoundException;
 
+	UserWithVolunteer getSummaryProfile(Long representativeId, Long userId) throws InstanceNotFoundException;
+
+  	VolunteerEntityFilesDto findVolunteerEntityFiles(Long representativeId, Long id) throws InstanceNotFoundException;
 }

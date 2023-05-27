@@ -1,6 +1,8 @@
 package es.udc.pcv.backend.rest.common;
 
 import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
+import es.udc.pcv.backend.model.exceptions.IncorrectLoginException;
+import es.udc.pcv.backend.model.exceptions.InvalidStatusTransitionException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
@@ -26,9 +28,22 @@ public class CommonControllerAdvice {
 	private final static String DUPLICATE_INSTANCE_EXCEPTION_CODE = "project.exceptions.DuplicateInstanceException";
 	private final static String PERMISSION_EXCEPTION_CODE = "project.exceptions.PermissionException";
 	private final static String ALREADY_PARTICIPATING_EXCEPTION_CODE = "project.exceptions.AlreadyParticipatingException";
+	private final static String INVALID_STATUS_TRANSITION_EXCEPTION_CODE ="project.exceptions.InvalidStatusTransitionException";
 	
 	@Autowired
 	private MessageSource messageSource;
+
+	@ExceptionHandler(InvalidStatusTransitionException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	@ResponseBody
+	public ErrorsDto handleInvalidStatusTransitionException(InvalidStatusTransitionException exception, Locale locale) {
+
+		String errorMessage = messageSource.getMessage(INVALID_STATUS_TRANSITION_EXCEPTION_CODE, null,
+				INVALID_STATUS_TRANSITION_EXCEPTION_CODE, locale);
+
+		return new ErrorsDto(errorMessage);
+
+	}
 
 	@ExceptionHandler(IllegalArgumentException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)

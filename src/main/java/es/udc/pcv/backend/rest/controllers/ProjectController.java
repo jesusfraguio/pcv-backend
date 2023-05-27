@@ -124,6 +124,18 @@ public class ProjectController {
         .body(resource.getResource());
   }
 
+  @Operation(summary= "get my entity's projects")
+  @GetMapping("/myEntityProjects")
+  public Block<ProjectSummaryDto> getMyEntityProjects(@RequestAttribute long userId,
+                                                      @RequestParam(defaultValue = "0") int page,
+                                                      @RequestParam(defaultValue = "10") int size,
+                                                      @RequestParam(required = false) String sortValue,
+                                                      @RequestParam(required = false) String sortOrder)
+      throws InstanceNotFoundException {
+    PageableDto pageableDto = new PageableDto(page,size,sortValue,sortOrder);
+    return entityConversor.toProjectBlockDto(representativeService.getMyEntityProjects(userId,pageableDto));
+  }
+
   @Operation(summary = "create a participation")
   @PostMapping("/createMyParticipation")
   public ResponseEntity<ParticipationDto> createMyParticipation(
