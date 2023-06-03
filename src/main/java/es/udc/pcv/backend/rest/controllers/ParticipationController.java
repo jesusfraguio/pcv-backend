@@ -1,10 +1,16 @@
 package es.udc.pcv.backend.rest.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import es.udc.pcv.backend.model.entities.Entidad;
+import es.udc.pcv.backend.model.entities.File;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.exceptions.InvalidStatusTransitionException;
+import es.udc.pcv.backend.model.exceptions.PermissionException;
 import es.udc.pcv.backend.model.services.Block;
 import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.services.VolunteerService;
+import es.udc.pcv.backend.model.to.EntityData;
+import es.udc.pcv.backend.rest.dtos.EntityDto;
 import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationConversor;
 import es.udc.pcv.backend.rest.dtos.ParticipationDto;
@@ -13,20 +19,28 @@ import es.udc.pcv.backend.rest.dtos.ParticipationSummaryDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationWithUserDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/participation")
 @Tag(name = "participations")
 public class ParticipationController {
+
+  @Autowired
+  private ObjectMapper objectMapper;
 
   @Autowired
   private RepresentativeService representativeService;
@@ -81,5 +95,35 @@ public class ParticipationController {
     PageableDto pageableDto = new PageableDto(page, size, sortValue, sortOrder);
     return participationConversor.toParticipationWithUserBlockDto(
         representativeService.findAllProjectParticipation(userId,projectId,pageableDto));
+  }
+  @Operation(summary = "Update my certificate file (user)")
+  @RequestMapping(value = "/addCertFile", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public boolean addCertFile( @RequestAttribute long userId,
+      @RequestParam String participationNumber, @RequestPart(name="cert",required = true)
+      MultipartFile cert)
+      throws IOException, PermissionException, InstanceNotFoundException {
+    Long realParticipationNumber = objectMapper.readValue(participationNumber, Long.class);
+
+    File certFile = null;
+    if(cert!= null){
+      certFile = volunteerService.updateMyParticipationCertFile(userId,realParticipationNumber,cert);
+    }
+    return true;
+
+  }
+  @Operation(summary = "Update entity's volunteer certificate file")
+  @RequestMapping(value = "/representative/addCertFile", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public boolean addVolunteerCertFile(@RequestAttribute long userId,
+                              @RequestParam String participationNumber, @RequestPart(name="cert",required = true)
+                                  MultipartFile cert)
+      throws IOException, PermissionException, InstanceNotFoundException {
+    Long realParticipationNumber = objectMapper.readValue(participationNumber, Long.class);
+
+    File certFile = null;
+    if(cert!= null){
+      certFile = representativeService.updateVolunteerCertFile(userId,realParticipationNumber,cert);
+    }
+    return true;
+
   }
 }
