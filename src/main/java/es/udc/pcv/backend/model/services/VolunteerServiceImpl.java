@@ -1,26 +1,40 @@
 package es.udc.pcv.backend.model.services;
 
+import es.udc.pcv.backend.model.entities.File;
+import es.udc.pcv.backend.model.entities.FileDao;
 import es.udc.pcv.backend.model.entities.Participation;
 import es.udc.pcv.backend.model.entities.ParticipationDao;
 import es.udc.pcv.backend.model.entities.Project;
 import es.udc.pcv.backend.model.entities.ProjectDao;
 import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.entities.RepresentativeDao;
+import es.udc.pcv.backend.model.entities.User;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.model.entities.VolunteerDao;
 import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.exceptions.InvalidStatusTransitionException;
+import es.udc.pcv.backend.model.exceptions.PermissionException;
 import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationStatusDto;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.Optional;
+import java.util.UUID;
+import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Transactional
@@ -34,6 +48,8 @@ public class VolunteerServiceImpl implements VolunteerService {
   private ProjectDao projectDao;
   @Autowired
   private RepresentativeDao representativeDao;
+  @Autowired
+  private FileDao fileDao;
 
   @Override
   public Participation createParticipation(ParticipationDto participationData) throws
@@ -102,6 +118,10 @@ public class VolunteerServiceImpl implements VolunteerService {
         }
         break;
       case APPROVED:
+        if (!(fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(), participation.get()
+            .getVolunteer(), File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH).isPresent())) {
+          throw new InvalidStatusTransitionException(currentStatus.getValue(), updatedStatus.getValue());
+        }
         if (updatedStatus != Participation.ParticipationState.ACCEPTED && updatedStatus != Participation.ParticipationState.DELETED) {
           throw new InvalidStatusTransitionException(currentStatus.getValue(), updatedStatus.getValue());
         }
@@ -120,6 +140,43 @@ public class VolunteerServiceImpl implements VolunteerService {
     participation.get().setState(updatedStatus);
     return participation.get();
 
+  }
+
+  @Override
+  public File updateMyParticipationCertFile(Long userId, Long id,
+                                             MultipartFile multipartFile)
+      throws InstanceNotFoundException, PermissionException, IOException {
+    Optional<Participation> participationOpt = participationDao.findById(id);
+    if(!participationOpt.isPresent()){
+      throw new InstanceNotFoundException("project.entities.participation",id);
+    }
+    User user1 = participationOpt.get().getVolunteer().getUser();
+    if(!(user1 != null && userId == user1.getId())){
+      throw new PermissionException();
+    }
+    String uploadDir = "./participations/certFiles/";
+    java.io.File dir = new java.io.File(uploadDir);
+    if (!dir.exists()) {
+      dir.mkdirs();
+    }
+    InputStream inputStream = multipartFile.getInputStream();
+    Tika tika = new Tika();
+    String mimeType = tika.detect(inputStream);
+    String extension = mimeType.split("/")[1];
+    UUID randomUIID = UUID.randomUUID();
+    String fileName = randomUIID.toString();
+    Path filePath = Paths.get(uploadDir + fileName + "." + extension);
+    if (Files.exists(filePath)) {
+      throw new IOException("File already exists: " + filePath);
+    }
+    Files.copy(multipartFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+    File saved = fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH,
+        extension,participationOpt.get().getProject().getEntity(),participationOpt.get().getVolunteer()));
+    Participation participation = participationOpt.get();
+    if(participation.getState()== Participation.ParticipationState.APPROVED){
+      participation.setState(Participation.ParticipationState.ACCEPTED);
+    }
+    return saved;
   }
 
 }

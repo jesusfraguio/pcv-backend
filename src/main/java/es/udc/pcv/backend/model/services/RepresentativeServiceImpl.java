@@ -17,19 +17,30 @@ import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.entities.RepresentativeDao;
 import es.udc.pcv.backend.model.entities.Task;
 import es.udc.pcv.backend.model.entities.TaskDao;
+import es.udc.pcv.backend.model.entities.User;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
+import es.udc.pcv.backend.model.exceptions.PermissionException;
 import es.udc.pcv.backend.model.to.ResourceWithType;
 import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.ProjectDto;
 import es.udc.pcv.backend.rest.dtos.ProjectFiltersDto;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -39,6 +50,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Transactional
@@ -216,6 +228,42 @@ public class RepresentativeServiceImpl implements RepresentativeService{
         projectId, pageable);
 
     return new Block<>(participationPage.getContent(),participationPage.hasNext());
+  }
+
+  @Override
+  public File updateVolunteerCertFile(Long userId, Long id, MultipartFile multipartFile)
+      throws InstanceNotFoundException, PermissionException, IOException {
+    Optional<Participation> participationOpt = participationDao.findById(id);
+    if(!participationOpt.isPresent()){
+      throw new InstanceNotFoundException("project.entities.participation",id);
+    }
+    Optional<Representative> representative = representativeDao.findById(userId);
+    if(!(representative.isPresent() && representative.get().getEntity().getId()==participationOpt.get().getProject().getEntity().getId())){
+      throw new PermissionException();
+    }
+    String uploadDir = "./participations/certFiles/";
+    java.io.File dir = new java.io.File(uploadDir);
+    if (!dir.exists()) {
+      dir.mkdirs();
+    }
+    InputStream inputStream = multipartFile.getInputStream();
+    Tika tika = new Tika();
+    String mimeType = tika.detect(inputStream);
+    String extension = mimeType.split("/")[1];
+    UUID randomUIID = UUID.randomUUID();
+    String fileName = randomUIID.toString();
+    Path filePath = Paths.get(uploadDir + fileName + "." + extension);
+    if (Files.exists(filePath)) {
+      throw new IOException("File already exists: " + filePath);
+    }
+    Files.copy(multipartFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+    File saved = fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH,
+        extension,representative.get().getEntity(), participationOpt.get().getVolunteer()));
+    Participation participation = participationOpt.get();
+    if(participation.getState()== Participation.ParticipationState.APPROVED){
+      participation.setState(Participation.ParticipationState.ACCEPTED);
+    }
+    return saved;
   }
 
   private Pageable pageableDtoToPageable(PageableDto pageableDto, String[] allowedSortColumns){

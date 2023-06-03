@@ -144,7 +144,7 @@ public class UserController {
 	public VolunteerSummaryDto getUserSummaryProfile(@RequestAttribute Long userId, @PathVariable Long id) throws InstanceNotFoundException{
 		UserWithVolunteer userWithVolunteer = userService.getSummaryProfile(userId,id);
 		VolunteerEntityFilesDto hasFiles = userService.findVolunteerEntityFiles(userId, id);
-		return userConversor.toUserSummaryDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer(), hasFiles.isHasCertFile(), hasFiles.isHasHarassmentFile());
+		return userConversor.toUserSummaryDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer(), hasFiles.isHasHarassmentFile(), hasFiles.isHasCertFile());
 	}
 	
 	@PostMapping("/{id}/changePassword")
