@@ -1,5 +1,6 @@
 package es.udc.pcv.backend.model.services;
 
+import es.udc.pcv.backend.model.entities.File;
 import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.model.to.UserWithRepresentative;
@@ -10,6 +11,8 @@ import es.udc.pcv.backend.model.exceptions.IncorrectPasswordException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.entities.User;
 import es.udc.pcv.backend.rest.dtos.VolunteerEntityFilesDto;
+import java.io.IOException;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
 	
@@ -34,4 +37,9 @@ public interface UserService {
 	UserWithVolunteer getSummaryProfile(Long representativeId, Long userId) throws InstanceNotFoundException;
 
   	VolunteerEntityFilesDto findVolunteerEntityFiles(Long representativeId, Long id) throws InstanceNotFoundException;
+
+	File updateDNI(Long userId, MultipartFile dni) throws IOException, InstanceNotFoundException;
+
+	File updateHarassmentCert(Long userId, MultipartFile harassmentCert)
+			throws InstanceNotFoundException, IOException;
 }

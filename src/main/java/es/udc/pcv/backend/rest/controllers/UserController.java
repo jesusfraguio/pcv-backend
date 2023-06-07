@@ -1,11 +1,13 @@
 package es.udc.pcv.backend.rest.controllers;
 
+import es.udc.pcv.backend.model.entities.File;
 import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.rest.dtos.NewPasswordParamsDto;
 import es.udc.pcv.backend.rest.dtos.UserConversor;
 import es.udc.pcv.backend.rest.dtos.VolunteerEntityFilesDto;
 import es.udc.pcv.backend.rest.dtos.VolunteerSummaryDto;
+import java.io.IOException;
 import java.net.URI;
 import java.util.Locale;
 
@@ -14,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,9 +27,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import es.udc.pcv.backend.model.exceptions.DuplicateInstanceException;
@@ -138,6 +145,26 @@ public class UserController {
 				userDto.getEmail());
 		return userConversor.toUserDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer());
 		
+	}
+	@Operation(summary = "Update my certificate file (user)")
+	@RequestMapping(value = "/update-my-doc/{id}", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public boolean addCertFile(@RequestAttribute Long userId, @PathVariable Long id, @RequestPart(name="dni",required = false)
+									   MultipartFile dni, @RequestPart(name="harassmentCert", required = false)
+										   MultipartFile harassment)
+			throws IOException, PermissionException, InstanceNotFoundException {
+
+		if (!id.equals(userId)) {
+			throw new PermissionException();
+		}
+
+		if(dni!= null){
+			userService.updateDNI(userId,dni);
+		}
+		else if(harassment!=null){
+			userService.updateHarassmentCert(userId,harassment);
+		}
+		return true;
+
 	}
 
 	@GetMapping("/{id}")
