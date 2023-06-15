@@ -38,6 +38,17 @@ public class Volunteer {
     this.birth = birth;
   }
 
+  public Volunteer(String name, String surname, String dni, LocalDate dniExpiration,
+                   String locality, String phone, LocalDate birth) {
+    this.name = name;
+    this.surname = surname;
+    this.dni = dni;
+    this.dniExpiration = dniExpiration;
+    this.locality = locality;
+    this.phone = phone;
+    this.birth = birth;
+  }
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   public Long getId() {

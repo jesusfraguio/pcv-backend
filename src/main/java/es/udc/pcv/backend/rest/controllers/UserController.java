@@ -1,10 +1,13 @@
 package es.udc.pcv.backend.rest.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import es.udc.pcv.backend.model.entities.File;
+import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.rest.dtos.NewPasswordParamsDto;
 import es.udc.pcv.backend.rest.dtos.UserConversor;
+import es.udc.pcv.backend.rest.dtos.VolunteerDataDto;
 import es.udc.pcv.backend.rest.dtos.VolunteerEntityFilesDto;
 import es.udc.pcv.backend.rest.dtos.VolunteerSummaryDto;
 import java.io.IOException;
@@ -69,7 +72,13 @@ public class UserController {
 	private UserService userService;
 
 	@Autowired
+	private RepresentativeService representativeService;
+
+	@Autowired
 	private UserConversor userConversor;
+
+	@Autowired
+	private ObjectMapper objectMapper;
 	
 	@ExceptionHandler(IncorrectLoginException.class)
 	@ResponseStatus(HttpStatus.NOT_FOUND)
@@ -112,6 +121,33 @@ public class UserController {
 		return ResponseEntity.created(location).body(userConversor.toAuthenticatedUserDto(generateServiceToken(user), user));
 
 	}
+
+	@Operation(summary = "create a volunteer by a representative")
+	@RequestMapping(value = "/createVolunteer", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<Boolean> createVolunteer(@RequestAttribute Long userId,
+			@RequestParam String volunteerDataDto, @RequestPart(name="dni",required = false)
+			MultipartFile dni, @RequestPart(name="harassmentCert",required = false) MultipartFile harassmentCert,
+			@RequestPart(name="cert",required = true) MultipartFile cert)
+			throws IOException, InstanceNotFoundException {
+
+		Volunteer volunteerData = userConversor.toVolunteer(objectMapper.readValue(volunteerDataDto,VolunteerDataDto.class));
+		Volunteer volunteer = userService.createVolunteer(userId, volunteerData, cert);
+
+		URI location = ServletUriComponentsBuilder
+				.fromCurrentRequest().path("/{id}")
+				.buildAndExpand(volunteer.getId()).toUri();
+
+		if(dni != null){
+			representativeService.updateVolunteerDNI(userId,volunteer.getId(),dni);
+		}
+		else if(harassmentCert != null){
+			representativeService.updateVolunteerHarassmentCert(userId,volunteer.getId(),harassmentCert);
+		}
+
+		return ResponseEntity.created(location).body(true);
+
+	}
+
 	@Operation(summary = "login")
 	@PostMapping("/login")
 	public AuthenticatedUserDto login(@Validated @RequestBody LoginParamsDto params)

@@ -31,6 +31,8 @@ public interface UserConversor {
 
   Volunteer toVolunteer(UserDto userDto);
 
+  Volunteer toVolunteer(VolunteerDataDto volunteerDataDto);
+
   UserDto toUserDto(User user);
 
   @Mapping(source = "user", target = "userDto")

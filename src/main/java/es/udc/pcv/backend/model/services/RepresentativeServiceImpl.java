@@ -18,6 +18,8 @@ import es.udc.pcv.backend.model.entities.RepresentativeDao;
 import es.udc.pcv.backend.model.entities.Task;
 import es.udc.pcv.backend.model.entities.TaskDao;
 import es.udc.pcv.backend.model.entities.User;
+import es.udc.pcv.backend.model.entities.Volunteer;
+import es.udc.pcv.backend.model.entities.VolunteerDao;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.exceptions.PermissionException;
 import es.udc.pcv.backend.model.to.ResourceWithType;
@@ -78,6 +80,9 @@ public class RepresentativeServiceImpl implements RepresentativeService{
 
   @Autowired
   private FileDao fileDao;
+
+  @Autowired
+  private VolunteerDao volunteerDao;
 
   @Override
   public Project createProject(ProjectDto projectDto, long userId)
@@ -264,6 +269,92 @@ public class RepresentativeServiceImpl implements RepresentativeService{
       participation.setState(Participation.ParticipationState.ACCEPTED);
     }
     return saved;
+  }
+
+  @Override
+  public File updateVolunteerHarassmentCert(Long representativeId, Long volunteerId,
+                                            MultipartFile multipartFile)
+      throws InstanceNotFoundException, IOException {
+    String uploadDir = "./users/harassmentCert/";
+    java.io.File dir = new java.io.File(uploadDir);
+    if (!dir.exists()) {
+      dir.mkdirs();
+    }
+    Optional<Volunteer> volunteer = volunteerDao.findById(volunteerId);
+    if(!volunteer.isPresent()){
+      throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
+    }
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    if(!representative.isPresent()){
+      throw new InstanceNotFoundException("project.entities.representative",representativeId);
+    }
+    if(!(fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(), volunteer.get(),
+        File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH).isPresent())){
+      throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
+    }
+    InputStream inputStream = multipartFile.getInputStream();
+    Tika tika = new Tika();
+    String mimeType = tika.detect(inputStream);
+    String extension = mimeType.split("/")[1];
+    UUID randomUIID = UUID.randomUUID();
+    String fileName = randomUIID.toString();
+    Path filePath = Paths.get(uploadDir + fileName + "." + extension);
+    if (Files.exists(filePath)) {
+      throw new IOException("File already exists: " + filePath);
+    }
+    Files.copy(multipartFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+    Optional<File> oldFile = fileDao.findByVolunteerAndFileType(volunteer.get(), File.FileType.HARASSMENT_CERT);
+    if (oldFile.isPresent()) {
+      File newFile = oldFile.get();
+      Path path = Paths.get("./users/harassmentCert/" + newFile.getId().toString() + "." + newFile.getExtension());
+      fileDao.delete(newFile);
+      Files.delete(path);
+    }
+    return fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),File.FileType.HARASSMENT_CERT,
+        extension,null,volunteer.get()));
+  }
+
+  @Override
+  public File updateVolunteerDNI(Long representativeId, Long volunteerId,
+                                 MultipartFile dni) throws InstanceNotFoundException, IOException {
+    String uploadDir = "./users/dni/";
+    java.io.File dir = new java.io.File(uploadDir);
+    if (!dir.exists()) {
+      dir.mkdirs();
+    }
+    Optional<Volunteer> volunteer = volunteerDao.findById(volunteerId);
+    if(!volunteer.isPresent()){
+      throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
+    }
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    if(!representative.isPresent()){
+      throw new InstanceNotFoundException("project.entities.representative",representativeId);
+    }
+    //if there is no permission volunteer does not exist
+    if(!(fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(), volunteer.get(),
+        File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH).isPresent())){
+      throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
+    }
+    InputStream inputStream = dni.getInputStream();
+    Tika tika = new Tika();
+    String mimeType = tika.detect(inputStream);
+    String extension = mimeType.split("/")[1];
+    UUID randomUIID = UUID.randomUUID();
+    String fileName = randomUIID.toString();
+    Path filePath = Paths.get(uploadDir + fileName + "." + extension);
+    if (Files.exists(filePath)) {
+      throw new IOException("File already exists: " + filePath);
+    }
+    Files.copy(dni.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+    Optional<File> oldFile = fileDao.findByVolunteerAndFileType(volunteer.get(), File.FileType.DNI);
+    if (oldFile.isPresent()) {
+      File newFile = oldFile.get();
+      Path path = Paths.get("./users/dni/" + newFile.getId().toString() + "." + newFile.getExtension());
+      fileDao.delete(newFile);
+      Files.delete(path);
+    }
+    return fileDao.save(new File(randomUIID,new Date(),dni.getOriginalFilename(),File.FileType.DNI,
+        extension,null,volunteer.get()));
   }
 
   private Pageable pageableDtoToPageable(PageableDto pageableDto, String[] allowedSortColumns){
