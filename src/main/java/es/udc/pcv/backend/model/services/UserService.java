@@ -17,6 +17,8 @@ import org.springframework.web.multipart.MultipartFile;
 public interface UserService {
 	
 	void signUp(UserWithVolunteer userWithVolunteer) throws DuplicateInstanceException;
+
+	Volunteer createVolunteer(Long representativeId, Volunteer volunteer, MultipartFile cert) throws InstanceNotFoundException, IOException;
 	
 	User login(String userName, String password) throws IncorrectLoginException;
 	
@@ -42,4 +44,6 @@ public interface UserService {
 
 	File updateHarassmentCert(Long userId, MultipartFile harassmentCert)
 			throws InstanceNotFoundException, IOException;
+
+	File updateAgreementFile(Long representativeId, Long volunteerId, MultipartFile agreementFile) throws InstanceNotFoundException, IOException;
 }

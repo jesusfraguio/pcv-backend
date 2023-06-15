@@ -31,4 +31,8 @@ public interface RepresentativeService {
   Block<Participation> findAllProjectParticipation(Long representativeId, Long projectId, PageableDto pageableDto) throws InstanceNotFoundException;
   File updateVolunteerCertFile(Long userId, Long id, MultipartFile multipartFile)
       throws InstanceNotFoundException, PermissionException, IOException;
+  File updateVolunteerHarassmentCert(Long representativeId, Long volunteerId, MultipartFile multipartFile)
+      throws InstanceNotFoundException, IOException;
+  File updateVolunteerDNI(Long representativeId, Long volunteerId, MultipartFile multipartFile)
+      throws InstanceNotFoundException, IOException;
 }
