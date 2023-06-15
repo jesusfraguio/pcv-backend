@@ -1,11 +1,16 @@
 package es.udc.pcv.backend.rest.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import es.udc.pcv.backend.model.entities.File;
+import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.rest.dtos.NewPasswordParamsDto;
 import es.udc.pcv.backend.rest.dtos.UserConversor;
+import es.udc.pcv.backend.rest.dtos.VolunteerDataDto;
 import es.udc.pcv.backend.rest.dtos.VolunteerEntityFilesDto;
 import es.udc.pcv.backend.rest.dtos.VolunteerSummaryDto;
+import java.io.IOException;
 import java.net.URI;
 import java.util.Locale;
 
@@ -14,6 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,9 +30,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import es.udc.pcv.backend.model.exceptions.DuplicateInstanceException;
@@ -62,7 +72,13 @@ public class UserController {
 	private UserService userService;
 
 	@Autowired
+	private RepresentativeService representativeService;
+
+	@Autowired
 	private UserConversor userConversor;
+
+	@Autowired
+	private ObjectMapper objectMapper;
 	
 	@ExceptionHandler(IncorrectLoginException.class)
 	@ResponseStatus(HttpStatus.NOT_FOUND)
@@ -105,6 +121,33 @@ public class UserController {
 		return ResponseEntity.created(location).body(userConversor.toAuthenticatedUserDto(generateServiceToken(user), user));
 
 	}
+
+	@Operation(summary = "create a volunteer by a representative")
+	@RequestMapping(value = "/createVolunteer", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<Boolean> createVolunteer(@RequestAttribute Long userId,
+			@RequestParam String volunteerDataDto, @RequestPart(name="dni",required = false)
+			MultipartFile dni, @RequestPart(name="harassmentCert",required = false) MultipartFile harassmentCert,
+			@RequestPart(name="cert",required = true) MultipartFile cert)
+			throws IOException, InstanceNotFoundException {
+
+		Volunteer volunteerData = userConversor.toVolunteer(objectMapper.readValue(volunteerDataDto,VolunteerDataDto.class));
+		Volunteer volunteer = userService.createVolunteer(userId, volunteerData, cert);
+
+		URI location = ServletUriComponentsBuilder
+				.fromCurrentRequest().path("/{id}")
+				.buildAndExpand(volunteer.getId()).toUri();
+
+		if(dni != null){
+			representativeService.updateVolunteerDNI(userId,volunteer.getId(),dni);
+		}
+		else if(harassmentCert != null){
+			representativeService.updateVolunteerHarassmentCert(userId,volunteer.getId(),harassmentCert);
+		}
+
+		return ResponseEntity.created(location).body(true);
+
+	}
+
 	@Operation(summary = "login")
 	@PostMapping("/login")
 	public AuthenticatedUserDto login(@Validated @RequestBody LoginParamsDto params)
@@ -139,12 +182,32 @@ public class UserController {
 		return userConversor.toUserDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer());
 		
 	}
+	@Operation(summary = "Update my certificate file (user)")
+	@RequestMapping(value = "/update-my-doc/{id}", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public boolean addCertFile(@RequestAttribute Long userId, @PathVariable Long id, @RequestPart(name="dni",required = false)
+									   MultipartFile dni, @RequestPart(name="harassmentCert", required = false)
+										   MultipartFile harassment)
+			throws IOException, PermissionException, InstanceNotFoundException {
+
+		if (!id.equals(userId)) {
+			throw new PermissionException();
+		}
+
+		if(dni!= null){
+			userService.updateDNI(userId,dni);
+		}
+		else if(harassment!=null){
+			userService.updateHarassmentCert(userId,harassment);
+		}
+		return true;
+
+	}
 
 	@GetMapping("/{id}")
 	public VolunteerSummaryDto getUserSummaryProfile(@RequestAttribute Long userId, @PathVariable Long id) throws InstanceNotFoundException{
 		UserWithVolunteer userWithVolunteer = userService.getSummaryProfile(userId,id);
 		VolunteerEntityFilesDto hasFiles = userService.findVolunteerEntityFiles(userId, id);
-		return userConversor.toUserSummaryDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer(), hasFiles.isHasCertFile(), hasFiles.isHasHarassmentFile());
+		return userConversor.toUserSummaryDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer(), hasFiles.isHasHarassmentFile(), hasFiles.isHasCertFile());
 	}
 	
 	@PostMapping("/{id}/changePassword")
