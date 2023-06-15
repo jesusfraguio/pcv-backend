@@ -21,7 +21,7 @@
         <org.mapstruct.version>1.5.3.Final</org.mapstruct.version>
         <!--  Data source properties -->
         <dataSource.user>pcv</dataSource.user>
-        <dataSource.password>pcv</dataSource.password>
+        <dataSource.password>${env.PCV_DATABASE_PASSWORD}</dataSource.password>
         <email.address>${env.EMAIL_ADDRESS}</email.address>
         <email.password>${env.EMAIL_PASSWORD}</email.password>
         <jwt.signKey>${env.SIGN_KEY}</jwt.signKey>
