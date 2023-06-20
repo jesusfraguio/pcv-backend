@@ -230,7 +230,8 @@ public class UserServiceImpl implements UserService {
 			throw new InstanceNotFoundException("project.entities.volunteer",userId);
 		}
 		//no relationship beetween entity and volunteer
-		if(!participationDao.existsByProjectEntityIdAndVolunteerId(entidad.getId(),userId)){
+		if(!(participationDao.existsByProjectEntityIdAndVolunteerId(entidad.getId(),userId) || fileDao.existsByVolunteerAndFileTypeAndEntidad(volunteer.get(),
+				File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH, entidad))){
 			throw new InstanceNotFoundException("project.entities.volunteer",userId);
 		}
 		User user = volunteer.get().getUser();

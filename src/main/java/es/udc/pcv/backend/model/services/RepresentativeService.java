@@ -7,6 +7,7 @@ import es.udc.pcv.backend.model.entities.File;
 import es.udc.pcv.backend.model.entities.Ods;
 import es.udc.pcv.backend.model.entities.Participation;
 import es.udc.pcv.backend.model.entities.Project;
+import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.exceptions.PermissionException;
 import es.udc.pcv.backend.model.to.ResourceWithType;
@@ -35,4 +36,6 @@ public interface RepresentativeService {
       throws InstanceNotFoundException, IOException;
   File updateVolunteerDNI(Long representativeId, Long volunteerId, MultipartFile multipartFile)
       throws InstanceNotFoundException, IOException;
+  Block<Volunteer> findMyEntityVolunteers(Long representativeId, PageableDto pageableDto)
+      throws InstanceNotFoundException;
 }

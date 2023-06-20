@@ -1,6 +1,7 @@
 package es.udc.pcv.backend.rest.dtos;
 import es.udc.pcv.backend.model.entities.User;
 import es.udc.pcv.backend.model.entities.Volunteer;
+import es.udc.pcv.backend.model.services.Block;
 import es.udc.pcv.backend.model.to.UserWithRepresentative;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -23,6 +24,15 @@ public interface UserConversor {
   @Mapping(source = "volunteer.id", target = "volunteerId")
   @Mapping(source = "user.email", target = "email")
   VolunteerSummaryDto toUserSummaryDto(User user, Volunteer volunteer, Boolean hasHarassmentFile, Boolean hasCertFile);
+
+  @Mapping(target = "isVerified", ignore = true)
+  @Mapping(target = "hasHarassmentFile", ignore = true)
+  @Mapping(target = "email", ignore = true)
+  @Mapping(target = "hasCertFile", ignore = true)
+  @Mapping(source = "id", target = "volunteerId")
+  VolunteerSummaryDto toVolunteerSummary(Volunteer volunteer);
+
+  Block<VolunteerSummaryDto> toVolunteerSummaryBlockDto(Block<Volunteer> volunteerBlock);
 
   @BeanMapping(ignoreByDefault = true)
   @Mapping(source = "password", target = "password")
