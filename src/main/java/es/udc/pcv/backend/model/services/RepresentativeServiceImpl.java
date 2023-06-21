@@ -357,6 +357,34 @@ public class RepresentativeServiceImpl implements RepresentativeService{
         extension,null,volunteer.get()));
   }
 
+  @Override
+  public Block<Volunteer> findMyEntityVolunteers(Long representativeId, PageableDto pageableDto)
+      throws InstanceNotFoundException {
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    if(!representative.isPresent()){
+      throw new InstanceNotFoundException("project.entities.representative",representativeId);
+    }
+
+    String[] allowedSortColumns = {"volunteerSurname", "volunteerName", "volunteerPhone", "volunteerDni"};
+
+    Pageable pageable = pageableDtoToPageable(pageableDto, allowedSortColumns);
+
+    Entidad entity = representative.get().getEntity();
+    // There won't be shown volunteers who registered themselves that did not sign (or were assigned in the project) agreement file yet
+    Page<File> filePage = fileDao.findAllByEntidadAndFileType(
+        entity, File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH, pageable);
+
+    List<Volunteer> volunteers = new ArrayList<>();
+    for (File fileEntity : filePage.getContent()) {
+      Volunteer volunteer = fileEntity.getVolunteer();
+      if (volunteer != null && !volunteers.contains(volunteer)) {
+        volunteers.add(volunteer);
+      }
+    }
+    return new Block<>(volunteers,filePage.hasNext());
+
+  }
+
   private Pageable pageableDtoToPageable(PageableDto pageableDto, String[] allowedSortColumns){
     boolean isSorted = pageableDto.getSortValue() != null;
     if (pageableDto.getSortValue() != null && !Arrays.asList(allowedSortColumns).contains(pageableDto.getSortValue())) {

@@ -1,11 +1,12 @@
 package es.udc.pcv.backend.rest.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import es.udc.pcv.backend.model.entities.File;
+import es.udc.pcv.backend.model.services.Block;
 import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.rest.dtos.NewPasswordParamsDto;
+import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.UserConversor;
 import es.udc.pcv.backend.rest.dtos.VolunteerDataDto;
 import es.udc.pcv.backend.rest.dtos.VolunteerEntityFilesDto;
@@ -208,6 +209,18 @@ public class UserController {
 		UserWithVolunteer userWithVolunteer = userService.getSummaryProfile(userId,id);
 		VolunteerEntityFilesDto hasFiles = userService.findVolunteerEntityFiles(userId, id);
 		return userConversor.toUserSummaryDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer(), hasFiles.isHasHarassmentFile(), hasFiles.isHasCertFile());
+	}
+
+	@Operation(summary = "Get a block of entity's volunteers")
+	@GetMapping("/representative/findMyVolunteers")
+	public Block<VolunteerSummaryDto> findMyVolunteers(@RequestAttribute Long userId,
+													   @RequestParam(defaultValue = "0") int page,
+													   @RequestParam(defaultValue = "10") int size,
+													   @RequestParam(required = false) String sortValue,
+													   @RequestParam(required = false) String sortOrder)
+			throws InstanceNotFoundException {
+		PageableDto pageableDto = new PageableDto(page,size,sortValue,sortOrder);
+		return userConversor.toVolunteerSummaryBlockDto(representativeService.findMyEntityVolunteers(userId,pageableDto));
 	}
 	
 	@PostMapping("/{id}/changePassword")
