@@ -208,7 +208,7 @@ public class UserController {
 	public VolunteerSummaryDto getUserSummaryProfile(@RequestAttribute Long userId, @PathVariable Long id) throws InstanceNotFoundException{
 		UserWithVolunteer userWithVolunteer = userService.getSummaryProfile(userId,id);
 		VolunteerEntityFilesDto hasFiles = userService.findVolunteerEntityFiles(userId, id);
-		return userConversor.toUserSummaryDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer(), hasFiles.isHasHarassmentFile(), hasFiles.isHasCertFile());
+		return userConversor.toUserSummaryDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer(), hasFiles.isHasHarassmentFile(), hasFiles.isHasCertFile(), hasFiles.isHasDniFile());
 	}
 
 	@Operation(summary = "Get a block of entity's volunteers")

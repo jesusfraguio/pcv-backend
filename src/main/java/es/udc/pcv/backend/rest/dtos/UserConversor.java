@@ -23,7 +23,8 @@ public interface UserConversor {
   @Mapping(target = "isVerified", source = "volunteer.verified")
   @Mapping(source = "volunteer.id", target = "volunteerId")
   @Mapping(source = "user.email", target = "email")
-  VolunteerSummaryDto toUserSummaryDto(User user, Volunteer volunteer, Boolean hasHarassmentFile, Boolean hasCertFile);
+  @Mapping(target = "hasDniFile", source = "hasDniFile")
+  VolunteerSummaryDto toUserSummaryDto(User user, Volunteer volunteer, Boolean hasHarassmentFile, Boolean hasCertFile, Boolean hasDniFile);
 
   @Mapping(target = "isVerified", ignore = true)
   @Mapping(target = "hasHarassmentFile", ignore = true)

@@ -2,12 +2,12 @@ package es.udc.pcv.backend.test.model.services;
 
 import es.udc.pcv.backend.model.entities.CollaborationArea;
 import es.udc.pcv.backend.model.entities.Entidad;
-import es.udc.pcv.backend.model.entities.EntidadDao;
 import es.udc.pcv.backend.model.entities.Ods;
 import es.udc.pcv.backend.model.entities.Participation;
 import es.udc.pcv.backend.model.entities.Project;
 import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
+import es.udc.pcv.backend.model.exceptions.PermissionException;
 import es.udc.pcv.backend.model.services.AdminService;
 import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.services.VolunteerService;
@@ -230,7 +230,7 @@ public class UserServiceTest {
 	@Test
 	public void createParticipation()
 			throws InstanceNotFoundException, DuplicateInstanceException, IncorrectLoginException,
-			AlreadyParticipatingException {
+			AlreadyParticipatingException, PermissionException {
 		User userBasic = createUser("user@gmail.com");
 		String clearPassword = userBasic.getPassword();
 
@@ -256,7 +256,7 @@ public class UserServiceTest {
 		ProjectDto projectDto = createProjectDto("Proyecto X",tasks,itemIds,representative.getEntity().getId(),collaborationAreas.get(0).getId());
 		Project project = representativeService.createProject(projectDto,userId);
 		ParticipationDto participationDto = new ParticipationDto(false,project.getId(),loggedInUser.getId());
-		Participation participation = volunteerService.createParticipation(participationDto);
+		Participation participation = volunteerService.createMyParticipation(participationDto,loggedInUser.getId());
 		assertEquals(participation.getProject(),project);
 		assertEquals(participation.getVolunteer().getUser().getId(),loggedInUser.getId());
 		assertFalse(participation.isRecommended());

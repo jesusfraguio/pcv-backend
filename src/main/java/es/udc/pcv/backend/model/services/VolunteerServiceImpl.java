@@ -52,11 +52,15 @@ public class VolunteerServiceImpl implements VolunteerService {
   private FileDao fileDao;
 
   @Override
-  public Participation createParticipation(ParticipationDto participationData) throws
-      InstanceNotFoundException, AlreadyParticipatingException {
+  public Participation createMyParticipation(ParticipationDto participationData, Long userId) throws
+      InstanceNotFoundException, AlreadyParticipatingException, PermissionException {
     Optional<Volunteer> volunteer = volunteerDao.findByUserId(participationData.getVolunteerId());
     if(!volunteer.isPresent()){
       throw new InstanceNotFoundException("project.entities.volunteer",participationData.getVolunteerId());
+    }
+    //basic user who is not representative trying to bypass system
+    if(volunteer.get().getUser().getId().longValue() != userId.longValue()){
+      throw new PermissionException();
     }
     Optional<Project> project = projectDao.findById(participationData.getProjectId());
     if(!project.isPresent()){
@@ -66,6 +70,30 @@ public class VolunteerServiceImpl implements VolunteerService {
       throw new AlreadyParticipatingException();
     }
     return participationDao.save(new Participation(0, Participation.ParticipationState.PENDING,
+        participationData.isRecommended(), LocalDate.now(),project.get(),volunteer.get()));
+  }
+
+  @Override
+  public Participation createParticipation(ParticipationDto participationData, Long representativeId)
+      throws InstanceNotFoundException, AlreadyParticipatingException, PermissionException {
+    Optional<Volunteer> volunteer = volunteerDao.findById(participationData.getVolunteerId());
+    if(!volunteer.isPresent()){
+      throw new InstanceNotFoundException("project.entities.volunteer",participationData.getVolunteerId());
+    }
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    // no need check isPresent since this endpoint is only for representatives
+    if(!((fileDao.existsByVolunteerAndFileTypeAndEntidad(volunteer.get(), File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH,representative.get().getEntity())
+    ) || (participationDao.existsByProjectEntityIdAndVolunteerId(representative.get().getEntity().getId(),volunteer.get().getId())))){
+      throw new PermissionException();
+    }
+    Optional<Project> project = projectDao.findById(participationData.getProjectId());
+    if(!project.isPresent()){
+      throw new InstanceNotFoundException("project.entities.project",participationData.getProjectId());
+    }
+    if(participationDao.findByProjectIdAndVolunteerId(project.get().getId(),volunteer.get().getId()).isPresent()){
+      throw new AlreadyParticipatingException();
+    }
+    return participationDao.save(new Participation(0, Participation.ParticipationState.SCHEDULED,
         participationData.isRecommended(), LocalDate.now(),project.get(),volunteer.get()));
   }
 
