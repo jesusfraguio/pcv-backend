@@ -7,6 +7,7 @@ import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
 import es.udc.pcv.backend.model.exceptions.DuplicateInstanceException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
+import es.udc.pcv.backend.model.exceptions.PermissionException;
 import es.udc.pcv.backend.model.services.Block;
 import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.services.UserService;
@@ -136,13 +137,30 @@ public class ProjectController {
     return entityConversor.toProjectBlockDto(representativeService.getMyEntityProjects(userId,pageableDto));
   }
 
-  @Operation(summary = "create a participation")
+  @Operation(summary = "create a participation for myself (the user who is requesting)")
   @PostMapping("/createMyParticipation")
   public ResponseEntity<ParticipationDto> createMyParticipation(
-      @Validated({ParticipationDto.AllValidations.class}) @RequestBody ParticipationDto participationDto)
-      throws InstanceNotFoundException, AlreadyParticipatingException {
+      @Validated({ParticipationDto.AllValidations.class}) @RequestBody ParticipationDto participationDto, @RequestAttribute Long userId)
+      throws InstanceNotFoundException, AlreadyParticipatingException, PermissionException {
 
-    ParticipationDto savedParticipationDto = participationConversor.toParticipationDto(volunteerService.createParticipation(participationDto));
+    ParticipationDto savedParticipationDto = participationConversor.toParticipationDto(volunteerService.createMyParticipation(participationDto, userId));
+
+    URI location = ServletUriComponentsBuilder
+        .fromCurrentRequest().path("/{id}")
+        .buildAndExpand(participationDto.getId()).toUri();
+
+    return ResponseEntity.created(location).body(savedParticipationDto);
+
+  }
+
+  @Operation(summary = "create a participation for my volunteer" )
+  @PostMapping("/representative/createParticipation")
+  public ResponseEntity<ParticipationDto> addVolunteerToProject(
+      @Validated({ParticipationDto.AllValidations.class}) @RequestBody ParticipationDto participationDto,
+      @RequestAttribute Long userId)
+      throws InstanceNotFoundException, AlreadyParticipatingException, PermissionException {
+
+    ParticipationDto savedParticipationDto = participationConversor.toParticipationDto(volunteerService.createParticipation(participationDto,userId));
 
     URI location = ServletUriComponentsBuilder
         .fromCurrentRequest().path("/{id}")

@@ -3,10 +3,12 @@ package es.udc.pcv.backend.rest.dtos;
 public class VolunteerEntityFilesDto {
   private boolean hasCertFile;
   private boolean hasHarassmentFile;
+  private boolean hasDniFile;
 
-  public VolunteerEntityFilesDto(boolean hasCertFile, boolean hasHarassmentFile) {
+  public VolunteerEntityFilesDto(boolean hasCertFile, boolean hasHarassmentFile, boolean hasDniFile) {
     this.hasCertFile = hasCertFile;
     this.hasHarassmentFile = hasHarassmentFile;
+    this.hasDniFile = hasDniFile;
   }
 
   public boolean isHasCertFile() {
@@ -23,5 +25,13 @@ public class VolunteerEntityFilesDto {
 
   public void setHasHarassmentFile(boolean hasHarassmentFile) {
     this.hasHarassmentFile = hasHarassmentFile;
+  }
+
+  public boolean isHasDniFile() {
+    return hasDniFile;
+  }
+
+  public void setHasDniFile(boolean hasDniFile) {
+    this.hasDniFile = hasDniFile;
   }
 }
