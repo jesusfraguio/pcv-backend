@@ -278,7 +278,9 @@ public class RepresentativeServiceImpl implements RepresentativeService{
     String uploadDir = "./users/harassmentCert/";
     java.io.File dir = new java.io.File(uploadDir);
     if (!dir.exists()) {
-      dir.mkdirs();
+      if(!dir.mkdirs()){
+        throw new IOException("Could not create path: " + dir.getPath());
+      }
     }
     Optional<Volunteer> volunteer = volunteerDao.findById(volunteerId);
     if(!volunteer.isPresent()){

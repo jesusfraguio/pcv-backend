@@ -29,6 +29,7 @@ public class CommonControllerAdvice {
 	private final static String PERMISSION_EXCEPTION_CODE = "project.exceptions.PermissionException";
 	private final static String ALREADY_PARTICIPATING_EXCEPTION_CODE = "project.exceptions.AlreadyParticipatingException";
 	private final static String INVALID_STATUS_TRANSITION_EXCEPTION_CODE ="project.exceptions.InvalidStatusTransitionException";
+	private final static String INVALID_STATUS_TRANSITION_BECAUSE_REQUIRED_FILE_EXCEPTION_CODE ="project.exceptions.InvalidStatusTransitionRequiredFileException";
 	
 	@Autowired
 	private MessageSource messageSource;
@@ -37,9 +38,17 @@ public class CommonControllerAdvice {
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	@ResponseBody
 	public ErrorsDto handleInvalidStatusTransitionException(InvalidStatusTransitionException exception, Locale locale) {
-
-		String errorMessage = messageSource.getMessage(INVALID_STATUS_TRANSITION_EXCEPTION_CODE, null,
-				INVALID_STATUS_TRANSITION_EXCEPTION_CODE, locale);
+		String errorMessage;
+		if(exception.getRequiredFileName() != null){
+			errorMessage = messageSource.getMessage(INVALID_STATUS_TRANSITION_BECAUSE_REQUIRED_FILE_EXCEPTION_CODE,
+					new Object[] { exception.getRequiredFileName() },
+					INVALID_STATUS_TRANSITION_BECAUSE_REQUIRED_FILE_EXCEPTION_CODE, locale
+				);
+		}
+		else {
+			errorMessage = messageSource.getMessage(INVALID_STATUS_TRANSITION_EXCEPTION_CODE, null,
+					INVALID_STATUS_TRANSITION_EXCEPTION_CODE, locale);
+		}
 
 		return new ErrorsDto(errorMessage);
 

@@ -150,6 +150,16 @@ public class VolunteerServiceImpl implements VolunteerService {
             .getVolunteer(), File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH).isPresent())) {
           throw new InvalidStatusTransitionException(currentStatus.getValue(), updatedStatus.getValue());
         }
+        // there are children -> law requirement requires volunteer harassment certificate
+        if (updatedStatus == Participation.ParticipationState.ACCEPTED && participation.get().getProject().isAreChildren()
+            && !(fileDao.findByVolunteerAndFileType(participation.get().getVolunteer(), File.FileType.HARASSMENT_CERT).isPresent())){
+          throw new InvalidStatusTransitionException(currentStatus.getValue(), updatedStatus.getValue(), File.FileType.HARASSMENT_CERT.toString());
+        }
+        //scanned dni is required to accept a participation
+        if(updatedStatus == Participation.ParticipationState.ACCEPTED
+            && !(fileDao.findByVolunteerAndFileType(participation.get().getVolunteer(), File.FileType.DNI).isPresent())){
+          throw new InvalidStatusTransitionException(currentStatus.getValue(), updatedStatus.getValue(), File.FileType.DNI.toString());
+        }
         if (updatedStatus != Participation.ParticipationState.ACCEPTED && updatedStatus != Participation.ParticipationState.DELETED) {
           throw new InvalidStatusTransitionException(currentStatus.getValue(), updatedStatus.getValue());
         }
@@ -173,7 +183,8 @@ public class VolunteerServiceImpl implements VolunteerService {
   @Override
   public File updateMyParticipationCertFile(Long userId, Long id,
                                              MultipartFile multipartFile)
-      throws InstanceNotFoundException, PermissionException, IOException {
+      throws InstanceNotFoundException, PermissionException, IOException,
+      InvalidStatusTransitionException {
     Optional<Participation> participationOpt = participationDao.findById(id);
     if(!participationOpt.isPresent()){
       throw new InstanceNotFoundException("project.entities.participation",id);
@@ -181,6 +192,19 @@ public class VolunteerServiceImpl implements VolunteerService {
     User user1 = participationOpt.get().getVolunteer().getUser();
     if(!(user1 != null && userId == user1.getId())){
       throw new PermissionException();
+    }
+    Participation participation = participationOpt.get();
+    //there must be a harassment cert
+    if(participation.getProject().isAreChildren() &&
+        !(fileDao.findByVolunteerAndFileType(participation.getVolunteer(), File.FileType.HARASSMENT_CERT).isPresent())){
+      throw new InvalidStatusTransitionException(Participation.ParticipationState.APPROVED.getValue(),
+          Participation.ParticipationState.ACCEPTED.getValue(), File.FileType.HARASSMENT_CERT.toString());
+    }
+    //there must be a scanned dni
+    if(participation.getState() == Participation.ParticipationState.APPROVED &&
+        !(fileDao.findByVolunteerAndFileType(participation.getVolunteer(), File.FileType.DNI).isPresent())){
+      throw new InvalidStatusTransitionException(Participation.ParticipationState.APPROVED.getValue(),
+          Participation.ParticipationState.ACCEPTED.getValue(), File.FileType.DNI.toString());
     }
     String uploadDir = "./participations/certFiles/";
     java.io.File dir = new java.io.File(uploadDir);
@@ -200,7 +224,6 @@ public class VolunteerServiceImpl implements VolunteerService {
     Files.copy(multipartFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
     File saved = fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH,
         extension,participationOpt.get().getProject().getEntity(),participationOpt.get().getVolunteer()));
-    Participation participation = participationOpt.get();
     if(participation.getState()== Participation.ParticipationState.APPROVED){
       participation.setState(Participation.ParticipationState.ACCEPTED);
     }

@@ -141,7 +141,7 @@ public class UserController {
 		if(dni != null){
 			representativeService.updateVolunteerDNI(userId,volunteer.getId(),dni);
 		}
-		else if(harassmentCert != null){
+		if(harassmentCert != null){
 			representativeService.updateVolunteerHarassmentCert(userId,volunteer.getId(),harassmentCert);
 		}
 
@@ -197,7 +197,7 @@ public class UserController {
 		if(dni!= null){
 			userService.updateDNI(userId,dni);
 		}
-		else if(harassment!=null){
+		if(harassment!=null){
 			userService.updateHarassmentCert(userId,harassment);
 		}
 		return true;
