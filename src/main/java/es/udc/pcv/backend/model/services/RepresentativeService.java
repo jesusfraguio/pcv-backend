@@ -26,6 +26,7 @@ public interface RepresentativeService {
   List<CollaborationArea> getAllCollaborationArea();
   Block<Project> findProjectsBy(ProjectFiltersDto projectFiltersDto, PageableDto pageableDto);
   ResourceWithType getLogo(Long entityId) throws InstanceNotFoundException;
+  ResourceWithType getVolunteerFile(Long representativeId, Long volunteerId, String fileType) throws InstanceNotFoundException;
   Project getProject(long projectId) throws InstanceNotFoundException;
   Block<Project> getMyEntityProjects(Long userId, PageableDto pageableDto) throws InstanceNotFoundException;
   Block<Participation> findAllPendingParticipation(Long representativeId, PageableDto pageableDto) throws InstanceNotFoundException;
@@ -35,6 +36,8 @@ public interface RepresentativeService {
   File updateVolunteerHarassmentCert(Long representativeId, Long volunteerId, MultipartFile multipartFile)
       throws InstanceNotFoundException, IOException;
   File updateVolunteerDNI(Long representativeId, Long volunteerId, MultipartFile multipartFile)
+      throws InstanceNotFoundException, IOException;
+  File uploadVolunteerPhoto(Long userId, Long id, MultipartFile multipartFile)
       throws InstanceNotFoundException, IOException;
   Block<Volunteer> findMyEntityVolunteers(Long representativeId, PageableDto pageableDto)
       throws InstanceNotFoundException;

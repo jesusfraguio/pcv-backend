@@ -4,11 +4,13 @@ public class VolunteerEntityFilesDto {
   private boolean hasCertFile;
   private boolean hasHarassmentFile;
   private boolean hasDniFile;
+  private boolean hasPhoto;
 
-  public VolunteerEntityFilesDto(boolean hasCertFile, boolean hasHarassmentFile, boolean hasDniFile) {
+  public VolunteerEntityFilesDto(boolean hasCertFile, boolean hasHarassmentFile, boolean hasDniFile, boolean hasPhoto) {
     this.hasCertFile = hasCertFile;
     this.hasHarassmentFile = hasHarassmentFile;
     this.hasDniFile = hasDniFile;
+    this.hasPhoto = hasPhoto;
   }
 
   public boolean isHasCertFile() {
@@ -33,5 +35,13 @@ public class VolunteerEntityFilesDto {
 
   public void setHasDniFile(boolean hasDniFile) {
     this.hasDniFile = hasDniFile;
+  }
+
+  public boolean isHasPhoto() {
+    return hasPhoto;
+  }
+
+  public void setHasPhoto(boolean hasPhoto) {
+    this.hasPhoto = hasPhoto;
   }
 }

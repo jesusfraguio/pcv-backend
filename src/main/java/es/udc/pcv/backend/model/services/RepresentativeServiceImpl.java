@@ -177,6 +177,42 @@ public class RepresentativeServiceImpl implements RepresentativeService{
   }
 
   @Override
+  public ResourceWithType getVolunteerFile(Long representativeId, Long volunteerId, String fileType)
+      throws InstanceNotFoundException {
+    File.FileType requestedFile = File.FileType.valueOf(fileType);
+    Optional<Volunteer> volunteer = volunteerDao.findById(volunteerId);
+    if(!volunteer.isPresent()){
+      throw new InstanceNotFoundException("project.entities.volunteer", volunteerId);
+    }
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    //if there is no permission volunteer does not exist
+    if(!(fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(), volunteer.get(),
+        File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH).isPresent())){
+      throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
+    }
+    Optional<File> file;
+    if(requestedFile.equals(File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH)){
+      file = fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(),volunteer.get(),requestedFile);
+    }
+    else{
+      file = fileDao.findByVolunteerAndFileType(volunteer.get(),requestedFile);
+    }
+    if (!file.isPresent()){
+      throw new InstanceNotFoundException("project.entities.file",volunteerId);
+    }
+
+    Resource resource;
+    java.io.File savedFile = getSystemFile(file.get(), requestedFile);
+    try {
+      resource = new UrlResource(savedFile.toURI());
+    } catch (MalformedURLException e) {
+      throw new InstanceNotFoundException("project.entities.volunteer", volunteerId);
+    }
+    return new ResourceWithType(resource,file.get().getExtension());
+
+  }
+
+  @Override
   public Project getProject(long projectId) throws InstanceNotFoundException {
     Optional<Project> project = projectDao.findById(projectId);
     if(!project.isPresent()){
@@ -360,6 +396,49 @@ public class RepresentativeServiceImpl implements RepresentativeService{
   }
 
   @Override
+  public File uploadVolunteerPhoto(Long representativeId, Long volunteerId, MultipartFile photo)
+      throws InstanceNotFoundException, IOException {
+    String uploadDir = "./users/photo/";
+    java.io.File dir = new java.io.File(uploadDir);
+    if (!dir.exists()) {
+      dir.mkdirs();
+    }
+    Optional<Volunteer> volunteer = volunteerDao.findById(volunteerId);
+    if(!volunteer.isPresent()){
+      throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
+    }
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    if(!representative.isPresent()){
+      throw new InstanceNotFoundException("project.entities.representative",representativeId);
+    }
+    //if there is no permission volunteer does not exist
+    if(!(fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(), volunteer.get(),
+        File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH).isPresent())){
+      throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
+    }
+    InputStream inputStream = photo.getInputStream();
+    Tika tika = new Tika();
+    String mimeType = tika.detect(inputStream);
+    String extension = mimeType.split("/")[1];
+    UUID randomUIID = UUID.randomUUID();
+    String fileName = randomUIID.toString();
+    Path filePath = Paths.get(uploadDir + fileName + "." + extension);
+    if (Files.exists(filePath)) {
+      throw new IOException("File already exists: " + filePath);
+    }
+    Files.copy(photo.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+    Optional<File> oldFile = fileDao.findByVolunteerAndFileType(volunteer.get(), File.FileType.PHOTO);
+    if (oldFile.isPresent()) {
+      File newFile = oldFile.get();
+      Path path = Paths.get("./users/photo/" + newFile.getId().toString() + "." + newFile.getExtension());
+      fileDao.delete(newFile);
+      Files.delete(path);
+    }
+    return fileDao.save(new File(randomUIID,new Date(),photo.getOriginalFilename(),File.FileType.PHOTO,
+        extension,null,volunteer.get()));
+  }
+
+  @Override
   public Block<Volunteer> findMyEntityVolunteers(Long representativeId, PageableDto pageableDto)
       throws InstanceNotFoundException {
     Optional<Representative> representative = representativeDao.findById(representativeId);
@@ -409,5 +488,23 @@ public class RepresentativeServiceImpl implements RepresentativeService{
     return pageable;
   }
 
+  private java.io.File getSystemFile(File file, File.FileType fileType) {
 
+    switch (fileType) {
+      case DNI:
+        return new java.io.File("./users/dni/" + file.getId() + "." + file.getExtension());
+      case HARASSMENT_CERT:
+        return new java.io.File(
+            "./users/harassmentCert/" + file.getId() + "." + file.getExtension());
+      case PHOTO:
+        return new java.io.File("./users/photo/" + file.getId() + "." + file.getExtension());
+      case AGREEMENT_FILE:
+        return new java.io.File("./entities/certs/" + file.getId() + "." + file.getExtension());
+      case AGREEMENT_FILE_SIGNED_BY_ENTITY:
+      case AGREEMENT_FILE_SIGNED_BY_BOTH:
+        return new java.io.File("./participations/certFiles/" + file.getId() + "." + file.getExtension());
+      default:
+        return null;
+    }
+  }
 }

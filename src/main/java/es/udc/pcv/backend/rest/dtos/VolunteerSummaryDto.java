@@ -10,10 +10,11 @@ public class VolunteerSummaryDto {
   private Boolean hasCertFile;
   private Boolean hasHarassmentFile;
   private Boolean hasDniFile;
+  private Boolean hasPhotoFile;
 
   public VolunteerSummaryDto(Long volunteerId, String email, String phone,
                              Boolean isVerified, String name, String surname, Boolean hasCertFile, Boolean hasHarassmentFile,
-                             Boolean hasDniFile) {
+                             Boolean hasDniFile, Boolean hasPhotoFile) {
     this.volunteerId = volunteerId;
     this.email = email;
     this.phone = phone;
@@ -23,6 +24,7 @@ public class VolunteerSummaryDto {
     this.hasCertFile = hasCertFile;
     this.hasHarassmentFile = hasHarassmentFile;
     this.hasDniFile = hasDniFile;
+    this.hasPhotoFile = hasPhotoFile;
   }
 
   public Long getVolunteerId() {
@@ -95,5 +97,13 @@ public class VolunteerSummaryDto {
 
   public void setHasDniFile(Boolean hasDniFile) {
     this.hasDniFile = hasDniFile;
+  }
+
+  public Boolean getHasPhotoFile() {
+    return hasPhotoFile;
+  }
+
+  public void setHasPhotoFile(Boolean hasPhotoFile) {
+    this.hasPhotoFile = hasPhotoFile;
   }
 }
