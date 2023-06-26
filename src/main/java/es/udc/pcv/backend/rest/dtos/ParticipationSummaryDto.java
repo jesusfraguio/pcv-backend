@@ -6,17 +6,19 @@ public class ParticipationSummaryDto {
   private Long projectId;
   private String projectName;
   private Long volunteerId;
+  private Long entityId;
   private Integer totalHours;
   private String status;
 
   public ParticipationSummaryDto(Long id, boolean isRecommended, Long projectId,
-                                 String projectName, Long volunteerId, Integer totalHours,
+                                 String projectName, Long volunteerId, Long entityId, Integer totalHours,
                                  String status) {
     this.id = id;
     this.isRecommended = isRecommended;
     this.projectId = projectId;
     this.projectName = projectName;
     this.volunteerId = volunteerId;
+    this.entityId = entityId;
     this.totalHours = totalHours;
     this.status = status;
   }
@@ -59,6 +61,14 @@ public class ParticipationSummaryDto {
 
   public void setVolunteerId(Long volunteerId) {
     this.volunteerId = volunteerId;
+  }
+
+  public Long getEntityId() {
+    return entityId;
+  }
+
+  public void setEntityId(Long entityId) {
+    this.entityId = entityId;
   }
 
   public Integer getTotalHours() {

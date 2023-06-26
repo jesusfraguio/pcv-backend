@@ -177,6 +177,27 @@ public class RepresentativeServiceImpl implements RepresentativeService{
   }
 
   @Override
+  public ResourceWithType getAgreementFile(Long entityId) throws InstanceNotFoundException {
+    Optional<Entidad> entity = entidadDao.findById(entityId);
+    if(!entity.isPresent()){
+      throw new InstanceNotFoundException("project.entities.entity", entityId);
+    }
+    File file = entity.get().getCertFile();
+    if(file==null){
+      throw new InstanceNotFoundException("project.entities.fileCert", entityId);
+    }
+    java.io.File savedFile = new java.io.File("./entities/certs/"+file.getId()+"."+file.getExtension());
+
+    Resource resource;
+    try {
+      resource = new UrlResource(savedFile.toURI());
+    } catch (MalformedURLException e) {
+      throw new InstanceNotFoundException("project.entities.entity", entityId);
+    }
+    return new ResourceWithType(resource,file.getExtension());
+  }
+
+  @Override
   public ResourceWithType getVolunteerFile(Long representativeId, Long volunteerId, String fileType)
       throws InstanceNotFoundException {
     File.FileType requestedFile = File.FileType.valueOf(fileType);

@@ -127,6 +127,21 @@ public class ProjectController {
         .body(resource.getResource());
   }
 
+  @Operation(summary = "get an entity's agreement file (only logged users)")
+  @GetMapping("/getAgreementFile/{id}")
+  public ResponseEntity<Resource> getAgreementFile(@RequestAttribute Long userId, @PathVariable Long id) throws InstanceNotFoundException {
+    ResourceWithType resource = representativeService.getAgreementFile(id);
+    MediaType mediaType;
+    if(resource.getExtension().equals("pdf")){
+      mediaType = MediaType.APPLICATION_PDF;
+    }
+    else mediaType = MediaType.APPLICATION_OCTET_STREAM;
+    return ResponseEntity.ok()
+        .contentType(mediaType)
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + "CopiaDeArchivoCompromiso" + "\"")
+        .body(resource.getResource());
+  }
+
   @Operation(summary= "get my entity's projects")
   @GetMapping("/myEntityProjects")
   public Block<ProjectSummaryDto> getMyEntityProjects(@RequestAttribute long userId,

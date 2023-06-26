@@ -26,6 +26,7 @@ public interface RepresentativeService {
   List<CollaborationArea> getAllCollaborationArea();
   Block<Project> findProjectsBy(ProjectFiltersDto projectFiltersDto, PageableDto pageableDto);
   ResourceWithType getLogo(Long entityId) throws InstanceNotFoundException;
+  ResourceWithType getAgreementFile(Long entityId) throws InstanceNotFoundException;
   ResourceWithType getVolunteerFile(Long representativeId, Long volunteerId, String fileType) throws InstanceNotFoundException;
   Project getProject(long projectId) throws InstanceNotFoundException;
   Block<Project> getMyEntityProjects(Long userId, PageableDto pageableDto) throws InstanceNotFoundException;
