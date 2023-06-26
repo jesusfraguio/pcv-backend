@@ -49,6 +49,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers(HttpMethod.GET,"/projects/searchProjectsBy").permitAll()
 			.antMatchers(HttpMethod.GET,"/projects/project/*").permitAll()
 			.antMatchers(HttpMethod.GET,"/projects/getLogo").permitAll()
+			.antMatchers(HttpMethod.GET,"/projects/getAgreementFile/*").hasAnyRole("ADMIN","REPRESENTATIVE","USER")
 			.antMatchers(HttpMethod.POST,"/projects/createMyParticipation").hasAnyRole("USER")
 			.antMatchers(HttpMethod.POST,"/projects/representative/createParticipation").hasAnyRole("ADMIN","REPRESENTATIVE")
 			.antMatchers(HttpMethod.GET, "/admin/getMyEntity").hasAnyRole("ADMIN","REPRESENTATIVE")
@@ -60,6 +61,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers(HttpMethod.POST,"/participation/addCertFile").hasRole("USER")
 			.antMatchers(HttpMethod.POST,"/participation/representative/addCertFile").hasAnyRole("ADMIN","REPRESENTATIVE")
 			.antMatchers(HttpMethod.POST,"/users/update-my-doc/*").hasRole("USER")
+			.antMatchers(HttpMethod.POST,"/users/representative/updateVolunteerDoc/*").hasAnyRole("ADMIN","REPRESENTATIVE")
+			.antMatchers(HttpMethod.GET,"/users/representative/downloadVolunteerDoc/*").hasAnyRole("ADMIN","REPRESENTATIVE")
 			.antMatchers(HttpMethod.POST,"/users/createVolunteer").hasAnyRole("ADMIN","REPRESENTATIVE")
 			.antMatchers(HttpMethod.GET, "/users/representative/findMyVolunteers").hasAnyRole("ADMIN","REPRESENTATIVE")
 			.anyRequest().denyAll();
@@ -76,7 +79,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	    config.setAllowedOriginPatterns(Arrays.asList("*"));
 	    config.addAllowedHeader("*");
 	    config.addAllowedMethod("*");
-	    
+		config.addExposedHeader("Content-Disposition");
+
 	    source.registerCorsConfiguration("/**", config);
 	    
 	    return source;

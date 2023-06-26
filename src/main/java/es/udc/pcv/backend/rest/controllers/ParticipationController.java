@@ -102,7 +102,8 @@ public class ParticipationController {
   public boolean addCertFile( @RequestAttribute long userId,
       @RequestParam String participationNumber, @RequestPart(name="cert",required = true)
       MultipartFile cert)
-      throws IOException, PermissionException, InstanceNotFoundException {
+      throws IOException, PermissionException, InstanceNotFoundException,
+      InvalidStatusTransitionException {
     Long realParticipationNumber = objectMapper.readValue(participationNumber, Long.class);
 
     File certFile = null;

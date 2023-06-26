@@ -27,5 +27,6 @@ public interface VolunteerService {
       throws InstanceNotFoundException, InvalidStatusTransitionException;
 
   File updateMyParticipationCertFile(Long userId, Long id, MultipartFile multipartFile)
-      throws InstanceNotFoundException, PermissionException, IOException;
+      throws InstanceNotFoundException, PermissionException, IOException,
+      InvalidStatusTransitionException;
 }

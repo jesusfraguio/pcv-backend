@@ -252,8 +252,9 @@ public class UserServiceImpl implements UserService {
 		Optional<File> harassmentFile = fileDao.findByVolunteerAndFileType(volunteer.get(),
 				File.FileType.HARASSMENT_CERT);
 		Optional<File> dniFile = fileDao.findByVolunteerAndFileType(volunteer.get(), File.FileType.DNI);
+		Optional<File> photoFile = fileDao.findByVolunteerAndFileType(volunteer.get(), File.FileType.PHOTO);
 		return new VolunteerEntityFilesDto(certFile.isPresent(), harassmentFile.isPresent(),
-				dniFile.isPresent());
+				dniFile.isPresent(), photoFile.isPresent());
 
 
 	}

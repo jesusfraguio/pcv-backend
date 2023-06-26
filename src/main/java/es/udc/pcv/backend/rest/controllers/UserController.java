@@ -3,6 +3,7 @@ package es.udc.pcv.backend.rest.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.udc.pcv.backend.model.services.Block;
 import es.udc.pcv.backend.model.services.RepresentativeService;
+import es.udc.pcv.backend.model.to.ResourceWithType;
 import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.rest.dtos.NewPasswordParamsDto;
@@ -19,6 +20,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -141,11 +144,61 @@ public class UserController {
 		if(dni != null){
 			representativeService.updateVolunteerDNI(userId,volunteer.getId(),dni);
 		}
-		else if(harassmentCert != null){
+		if(harassmentCert != null){
 			representativeService.updateVolunteerHarassmentCert(userId,volunteer.getId(),harassmentCert);
 		}
 
 		return ResponseEntity.created(location).body(true);
+
+	}
+
+	@Operation(summary = "representative might update any volunteer doc")
+	@RequestMapping(value = "/representative/updateVolunteerDoc/{id}", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<Boolean> updateMyVolunteer(@RequestAttribute Long userId, @PathVariable Long id,
+													 @RequestPart(name="dni",required = false) MultipartFile dni,
+													 @RequestPart(name="harassmentCert",required = false) MultipartFile harassmentCert,
+													 @RequestPart(name="photo",required = false) MultipartFile photo)
+			throws IOException, InstanceNotFoundException{
+
+		URI location = ServletUriComponentsBuilder
+				.fromCurrentRequest().path("/{id}")
+				.buildAndExpand(id).toUri();
+
+		if(dni != null){
+			representativeService.updateVolunteerDNI(userId,id,dni);
+		}
+		if(harassmentCert != null){
+			representativeService.updateVolunteerHarassmentCert(userId,id,harassmentCert);
+		}
+		if (photo != null){
+			representativeService.uploadVolunteerPhoto(userId,id,photo);
+		}
+
+		return ResponseEntity.created(location).body(true);
+
+	}
+
+	@Operation(summary = "representative might download any volunteer doc",description = "Request param fileType (string) is required with one of the next values: HARASSMENT_CERT, DNI, AGREEMENT_FILE_SIGNED_BY_BOTH, PHOTO")
+	@GetMapping(value = "/representative/downloadVolunteerDoc/{id}")
+	public ResponseEntity<Resource> downloadVolunteerFile(@RequestAttribute Long userId, @PathVariable Long id, @RequestParam(name = "fileType") String fileType)
+		throws InstanceNotFoundException {
+
+		ResourceWithType resource = representativeService.getVolunteerFile(userId,id,fileType);
+		MediaType mediaType;
+		if(resource.getExtension().equals("pdf")){
+			mediaType = MediaType.APPLICATION_PDF;
+		}
+		else if(resource.getExtension().equals("png")){
+			mediaType = MediaType.IMAGE_PNG;
+		}
+		else if(resource.getExtension().equals("gif")){
+			mediaType = MediaType.IMAGE_GIF;
+		}
+		else mediaType = MediaType.IMAGE_JPEG;
+		return ResponseEntity.ok()
+				.contentType(mediaType)
+				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getResource().getFilename() + "\"")
+				.body(resource.getResource());
 
 	}
 
@@ -197,7 +250,7 @@ public class UserController {
 		if(dni!= null){
 			userService.updateDNI(userId,dni);
 		}
-		else if(harassment!=null){
+		if(harassment!=null){
 			userService.updateHarassmentCert(userId,harassment);
 		}
 		return true;
@@ -208,7 +261,8 @@ public class UserController {
 	public VolunteerSummaryDto getUserSummaryProfile(@RequestAttribute Long userId, @PathVariable Long id) throws InstanceNotFoundException{
 		UserWithVolunteer userWithVolunteer = userService.getSummaryProfile(userId,id);
 		VolunteerEntityFilesDto hasFiles = userService.findVolunteerEntityFiles(userId, id);
-		return userConversor.toUserSummaryDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer(), hasFiles.isHasHarassmentFile(), hasFiles.isHasCertFile(), hasFiles.isHasDniFile());
+		return userConversor.toUserSummaryDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer(), hasFiles.isHasHarassmentFile(),
+				hasFiles.isHasCertFile(), hasFiles.isHasDniFile(), hasFiles.isHasPhoto());
 	}
 
 	@Operation(summary = "Get a block of entity's volunteers")
