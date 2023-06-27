@@ -181,7 +181,7 @@ public class Project {
     isDeleted = deleted;
   }
 
-  @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = false)
   public List<Task> getTasks() {
     return tasks;
   }

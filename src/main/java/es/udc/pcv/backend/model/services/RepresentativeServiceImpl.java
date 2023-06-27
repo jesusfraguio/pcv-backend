@@ -109,7 +109,15 @@ public class RepresentativeServiceImpl implements RepresentativeService{
         projectDto.getLocality(),projectDto.getSchedule(),projectDto.getCapacity(),projectDto.getPreferableVolunteer(),
         projectDto.isAreChildren(),projectDto.isVisible(),entidadDao.findById(projectDto.getEntityId()).get(),collaborationArea.get());
     project.setOds(odsList);
+    if(projectDto.getId() != null){
+      //for updating
+      project.setId(projectDto.getId());
+    }
     project = projectDao.save(project);
+    if(projectDto.getId() != null){
+      project.setTasks(null);
+      taskDao.deleteAllByProjectId(projectDto.getId());
+    }
     List<Task> taskList = new ArrayList<>();
     for (String name : projectDto.getTasks()){
       taskList.add(taskDao.save(new Task(name,project)));

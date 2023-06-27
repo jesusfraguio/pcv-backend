@@ -41,6 +41,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -68,7 +69,22 @@ public class ProjectController {
   @Operation(summary = "create a project")
   @PostMapping("/createProject")
   public ResponseEntity<ProjectDto> createProject(
-      @Validated({ProjectDto.AllValidations.class}) @RequestAttribute Long userId, @RequestBody ProjectDto projectDto)
+      @RequestAttribute Long userId, @Validated({ProjectDto.AllValidations.class}) @RequestBody ProjectDto projectDto)
+      throws InstanceNotFoundException {
+
+    ProjectDto savedProjectDto = entityConversor.toProjectDto(representativeService.createProject(projectDto,userId));
+
+    URI location = ServletUriComponentsBuilder
+        .fromCurrentRequest().path("/{id}")
+        .buildAndExpand(savedProjectDto.getId()).toUri();
+
+    return ResponseEntity.created(location).body(savedProjectDto);
+
+  }
+  @Operation(summary = "updates a project")
+  @PostMapping("/updateProject")
+  public ResponseEntity<ProjectDto> updateProject(
+      @RequestAttribute Long userId, @Validated({ProjectDto.UpdateValidation.class}) @RequestBody ProjectDto projectDto)
       throws InstanceNotFoundException {
 
     ProjectDto savedProjectDto = entityConversor.toProjectDto(representativeService.createProject(projectDto,userId));
