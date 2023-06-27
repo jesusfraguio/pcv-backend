@@ -107,7 +107,7 @@ public class RepresentativeServiceImpl implements RepresentativeService{
 
     Project project = new Project(projectDto.getName(),projectDto.getShortDescription(),projectDto.getLongDescription(),
         projectDto.getLocality(),projectDto.getSchedule(),projectDto.getCapacity(),projectDto.getPreferableVolunteer(),
-        projectDto.isAreChildren(),projectDto.isVisible(),entidadDao.findById(projectDto.getEntityId()).get(),collaborationArea.get());
+        projectDto.isAreChildren(),projectDto.isVisible(),projectDto.isPaused(),entidadDao.findById(projectDto.getEntityId()).get(),collaborationArea.get());
     project.setOds(odsList);
     if(projectDto.getId() != null){
       //for updating

@@ -46,7 +46,7 @@ public class Project {
 
   public Project(String name, String shortDescription, String longDescription,
                  String locality, String schedule, int capacity, String preferableVolunteer, boolean areChildren,
-                 boolean isVisible, Entidad entity, CollaborationArea collaborationArea) {
+                 boolean isVisible, boolean isPaused, Entidad entity, CollaborationArea collaborationArea) {
     this.name = name;
     this.shortDescription = shortDescription;
     this.longDescription = longDescription;
@@ -56,7 +56,7 @@ public class Project {
     this.preferableVolunteer = preferableVolunteer;
     this.completenessDate = null;
     this.areChildren = areChildren;
-    this.isPaused = false;
+    this.isPaused = isPaused;
     this.isVisible = isVisible;
     this.isDeleted = false;
     this.entity = entity;

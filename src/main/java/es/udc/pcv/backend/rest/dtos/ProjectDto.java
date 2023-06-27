@@ -37,6 +37,7 @@ public class ProjectDto {
   private boolean areChildren;
   @NotNull(groups={ProjectDto.AllValidations.class, ProjectDto.UpdateValidation.class})
   private boolean isVisible;
+  private boolean isPaused;
   @NotEmpty(groups={ProjectDto.AllValidations.class, ProjectDto.UpdateValidation.class})
   private List<@Size(min=1, max=220, groups={ProjectDto.AllValidations.class}) String> tasks;
   @NotEmpty(groups={ProjectDto.AllValidations.class, ProjectDto.UpdateValidation.class})
@@ -53,7 +54,7 @@ public class ProjectDto {
 
   public ProjectDto(Long id, String name, String shortDescription, String longDescription,
                     String locality, String schedule, int capacity,
-                    String preferableVolunteer, boolean areChildren, boolean isVisible,
+                    String preferableVolunteer, boolean areChildren, boolean isVisible, Boolean isPaused,
                     List<@Size(min = 1, max = 220, groups = {
                         AllValidations.class}) String> tasks, List<Long> ods, Long entityId,
                     Long areaId) {
@@ -71,6 +72,7 @@ public class ProjectDto {
     this.ods = ods;
     this.entityId = entityId;
     this.areaId = areaId;
+    this.isPaused = isPaused;
   }
 
   public Long getId() {
@@ -199,5 +201,13 @@ public class ProjectDto {
 
   public void setAreaName(String areaName) {
     this.areaName = areaName;
+  }
+
+  public boolean isPaused() {
+    return isPaused;
+  }
+
+  public void setPaused(boolean paused) {
+    isPaused = paused;
   }
 }
