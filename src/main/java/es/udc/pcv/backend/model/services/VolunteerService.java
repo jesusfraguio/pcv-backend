@@ -6,6 +6,7 @@ import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.exceptions.InvalidStatusTransitionException;
 import es.udc.pcv.backend.model.exceptions.PermissionException;
+import es.udc.pcv.backend.model.exceptions.ProjectIsPausedException;
 import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationStatusDto;
@@ -15,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 public interface VolunteerService {
   Participation createMyParticipation(ParticipationDto participationData, Long userId)
       throws InstanceNotFoundException,
-      AlreadyParticipatingException, PermissionException;
+      AlreadyParticipatingException, PermissionException, ProjectIsPausedException;
 
   Participation createParticipation(ParticipationDto participationData, Long representativeId)
       throws InstanceNotFoundException,

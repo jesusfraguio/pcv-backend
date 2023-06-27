@@ -15,6 +15,7 @@ import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.exceptions.InvalidStatusTransitionException;
 import es.udc.pcv.backend.model.exceptions.PermissionException;
+import es.udc.pcv.backend.model.exceptions.ProjectIsPausedException;
 import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationStatusDto;
@@ -53,7 +54,8 @@ public class VolunteerServiceImpl implements VolunteerService {
 
   @Override
   public Participation createMyParticipation(ParticipationDto participationData, Long userId) throws
-      InstanceNotFoundException, AlreadyParticipatingException, PermissionException {
+      InstanceNotFoundException, AlreadyParticipatingException, PermissionException,
+      ProjectIsPausedException{
     Optional<Volunteer> volunteer = volunteerDao.findByUserId(participationData.getVolunteerId());
     if(!volunteer.isPresent()){
       throw new InstanceNotFoundException("project.entities.volunteer",participationData.getVolunteerId());
@@ -65,6 +67,9 @@ public class VolunteerServiceImpl implements VolunteerService {
     Optional<Project> project = projectDao.findById(participationData.getProjectId());
     if(!project.isPresent()){
       throw new InstanceNotFoundException("project.entities.project",participationData.getProjectId());
+    }
+    if(project.get().isPaused() || !project.get().isVisible()){
+      throw new ProjectIsPausedException();
     }
     if(participationDao.findByProjectIdAndVolunteerId(project.get().getId(),volunteer.get().getId()).isPresent()){
       throw new AlreadyParticipatingException();

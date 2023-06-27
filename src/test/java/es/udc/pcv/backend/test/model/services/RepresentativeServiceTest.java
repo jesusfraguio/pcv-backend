@@ -57,7 +57,7 @@ public class RepresentativeServiceTest {
 
   private ProjectDto createProjectDto(String name, List<String> task, List<Long> ods,long entityId, long areaId){
     ProjectDto projectDto = new ProjectDto(null,name,"Descripción corta","Detalle de las tareas","A Coruña","Lunes y Martes de 10:30 a 12:30",
-        10,"Sin preferencias",false,true,task,ods,entityId,areaId);
+        10,"Sin preferencias",false,true,false,task,ods,entityId,areaId);
     return projectDto;
   }
 

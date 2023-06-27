@@ -8,6 +8,7 @@ import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
 import es.udc.pcv.backend.model.exceptions.DuplicateInstanceException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.exceptions.PermissionException;
+import es.udc.pcv.backend.model.exceptions.ProjectIsPausedException;
 import es.udc.pcv.backend.model.services.Block;
 import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.services.UserService;
@@ -174,7 +175,8 @@ public class ProjectController {
   @PostMapping("/createMyParticipation")
   public ResponseEntity<ParticipationDto> createMyParticipation(
       @Validated({ParticipationDto.AllValidations.class}) @RequestBody ParticipationDto participationDto, @RequestAttribute Long userId)
-      throws InstanceNotFoundException, AlreadyParticipatingException, PermissionException {
+      throws InstanceNotFoundException, AlreadyParticipatingException, PermissionException,
+      ProjectIsPausedException {
 
     ParticipationDto savedParticipationDto = participationConversor.toParticipationDto(volunteerService.createMyParticipation(participationDto, userId));
 

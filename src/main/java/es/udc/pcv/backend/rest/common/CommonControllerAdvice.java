@@ -3,6 +3,7 @@ package es.udc.pcv.backend.rest.common;
 import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
 import es.udc.pcv.backend.model.exceptions.IncorrectLoginException;
 import es.udc.pcv.backend.model.exceptions.InvalidStatusTransitionException;
+import es.udc.pcv.backend.model.exceptions.ProjectIsPausedException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
@@ -28,6 +29,7 @@ public class CommonControllerAdvice {
 	private final static String DUPLICATE_INSTANCE_EXCEPTION_CODE = "project.exceptions.DuplicateInstanceException";
 	private final static String PERMISSION_EXCEPTION_CODE = "project.exceptions.PermissionException";
 	private final static String ALREADY_PARTICIPATING_EXCEPTION_CODE = "project.exceptions.AlreadyParticipatingException";
+	private final static String PROJECT_IS_PAUSED_EXCEPTION_CODE = "project.exceptions.ProjectIsPausedException";
 	private final static String INVALID_STATUS_TRANSITION_EXCEPTION_CODE ="project.exceptions.InvalidStatusTransitionException";
 	private final static String INVALID_STATUS_TRANSITION_BECAUSE_REQUIRED_FILE_EXCEPTION_CODE ="project.exceptions.InvalidStatusTransitionRequiredFileException";
 	
@@ -129,6 +131,18 @@ public class CommonControllerAdvice {
 	public ErrorsDto handleAlreadyParticipatingException(AlreadyParticipatingException exception, Locale locale) {
 
 		String errorMessage = messageSource.getMessage(ALREADY_PARTICIPATING_EXCEPTION_CODE, null, ALREADY_PARTICIPATING_EXCEPTION_CODE,
+				locale);
+
+		return new ErrorsDto(errorMessage);
+
+	}
+
+	@ExceptionHandler(ProjectIsPausedException.class)
+	@ResponseStatus(HttpStatus.CONFLICT)
+	@ResponseBody
+	public ErrorsDto handleProjectIsPausedException(ProjectIsPausedException exception, Locale locale) {
+
+		String errorMessage = messageSource.getMessage(PROJECT_IS_PAUSED_EXCEPTION_CODE, null, PROJECT_IS_PAUSED_EXCEPTION_CODE,
 				locale);
 
 		return new ErrorsDto(errorMessage);
