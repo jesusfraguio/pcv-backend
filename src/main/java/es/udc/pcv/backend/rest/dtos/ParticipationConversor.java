@@ -1,6 +1,7 @@
 package es.udc.pcv.backend.rest.dtos;
 
 import es.udc.pcv.backend.model.entities.Participation;
+import es.udc.pcv.backend.model.entities.RegisteredHours;
 import es.udc.pcv.backend.model.services.Block;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -32,4 +33,7 @@ public interface ParticipationConversor {
   Block<ParticipationSummaryDto> toParticipationBlockDto(Block<Participation> projectBlock);
 
   Block<ParticipationWithUserDto> toParticipationWithUserBlockDto(Block<Participation> projectBlock);
+
+  @Mapping(target = "participationId", source = "participation.id")
+  RegisteredHoursDto toRegisteredHoursDto(RegisteredHours registeredHours);
 }

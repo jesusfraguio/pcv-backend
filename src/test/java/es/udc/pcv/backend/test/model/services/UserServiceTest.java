@@ -5,8 +5,10 @@ import es.udc.pcv.backend.model.entities.Entidad;
 import es.udc.pcv.backend.model.entities.Ods;
 import es.udc.pcv.backend.model.entities.Participation;
 import es.udc.pcv.backend.model.entities.Project;
+import es.udc.pcv.backend.model.entities.RegisteredHours;
 import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
+import es.udc.pcv.backend.model.exceptions.ParticipationIsInDateException;
 import es.udc.pcv.backend.model.exceptions.PermissionException;
 import es.udc.pcv.backend.model.exceptions.ProjectIsPausedException;
 import es.udc.pcv.backend.model.services.AdminService;
@@ -18,6 +20,8 @@ import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.rest.dtos.ParticipationDto;
 import es.udc.pcv.backend.rest.dtos.ProjectDto;
+import es.udc.pcv.backend.rest.dtos.RegisteredHoursDto;
+import java.lang.reflect.Executable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -261,6 +265,44 @@ public class UserServiceTest {
 		assertEquals(participation.getProject(),project);
 		assertEquals(participation.getVolunteer().getUser().getId(),loggedInUser.getId());
 		assertFalse(participation.isRecommended());
+	}
+
+	@Test
+	public void createRegisteredHoursParticipationIsInDateException()
+			throws InstanceNotFoundException, DuplicateInstanceException, IncorrectLoginException,
+			AlreadyParticipatingException, PermissionException, ProjectIsPausedException,
+			ParticipationIsInDateException {
+		User userBasic = createUser("user@gmail.com");
+		String clearPassword = userBasic.getPassword();
+
+		Volunteer volunteer = createVolunteer();
+		userService.signUp(new UserWithVolunteer(userBasic,volunteer));
+
+		User loggedInUser = userService.login(userBasic.getEmail(), clearPassword);
+
+		User user = createUser("representante6@gmail.com");
+		Representative representative = createRepresentative();
+		long userId = userService.createRepresentative(new UserWithRepresentative(user.getPassword(),user.getEmail(),representative.getName(),
+				representative.getSurname(),representative.getPhone(),representative.getEntity().getId())).getId();
+		List<Ods> odsList = representativeService.getAllOds();
+		List<CollaborationArea> collaborationAreas = representativeService.getAllCollaborationArea();
+		List<String> tasks = new ArrayList<>();
+		List<Long> itemIds = odsList.stream()
+				.filter(item -> (item.getNumber() == 2) || (item.getNumber() == 1))
+				.map(Ods::getId)
+				.collect(Collectors.toList());
+		tasks.add("Task 1");
+		tasks.add("Cocinar y preparar comidas");
+		tasks.add("Envasar y distribuir alimentos a personas necesitadas");
+		ProjectDto projectDto = createProjectDto("Proyecto X",tasks,itemIds,representative.getEntity().getId(),collaborationAreas.get(0).getId());
+		Project project = representativeService.createProject(projectDto,userId);
+		ParticipationDto participationDto = new ParticipationDto(false,project.getId(),loggedInUser.getId());
+		Participation participation = volunteerService.createMyParticipation(participationDto,loggedInUser.getId());
+		RegisteredHours participationHour1 = representativeService.createHourRegister(userId,new RegisteredHoursDto(null,
+				participation.getId(), 2, LocalDate.of(2022,6,30)));
+		assertEquals(participationHour1.getParticipation(), participation);
+		assertThrows(ParticipationIsInDateException.class, () -> representativeService.createHourRegister(userId,new RegisteredHoursDto(null,
+				participation.getId(), 3, LocalDate.of(2022,6,30))));
 	}
 
 }
