@@ -2,9 +2,12 @@ package es.udc.pcv.backend.rest.dtos;
 
 import es.udc.pcv.backend.model.entities.Participation;
 import es.udc.pcv.backend.model.entities.RegisteredHours;
+import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.model.services.Block;
+import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 
 @Mapper(componentModel = "spring")
 public interface ParticipationConversor {
@@ -34,6 +37,15 @@ public interface ParticipationConversor {
 
   Block<ParticipationWithUserDto> toParticipationWithUserBlockDto(Block<Participation> projectBlock);
 
+  @Named("concatVolunteerNameAndSurname")
+  default String concatVolunteerNameAndSurname(Volunteer volunteer) {
+    return volunteer.getName() + " " + volunteer.getSurname();
+  }
+
+  @Mapping(target = "volunteerName", source = "participation.volunteer", qualifiedByName = "concatVolunteerNameAndSurname")
+  @Mapping(target = "volunteerId", source = "participation.volunteer.id")
   @Mapping(target = "participationId", source = "participation.id")
   RegisteredHoursDto toRegisteredHoursDto(RegisteredHours registeredHours);
+
+  List<RegisteredHoursDto> toRegisteredHoursListDto (List<RegisteredHours> registeredHoursDtoList);
 }

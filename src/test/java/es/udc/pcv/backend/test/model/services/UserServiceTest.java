@@ -299,10 +299,10 @@ public class UserServiceTest {
 		ParticipationDto participationDto = new ParticipationDto(false,project.getId(),loggedInUser.getId());
 		Participation participation = volunteerService.createMyParticipation(participationDto,loggedInUser.getId());
 		RegisteredHours participationHour1 = representativeService.createHourRegister(userId,new RegisteredHoursDto(null,
-				participation.getId(), 2, LocalDate.of(2022,6,30)));
+				participation.getId(), 2, LocalDate.of(2022,6,30), null, null));
 		assertEquals(participationHour1.getParticipation(), participation);
 		assertThrows(ParticipationIsInDateException.class, () -> representativeService.createHourRegister(userId,new RegisteredHoursDto(null,
-				participation.getId(), 3, LocalDate.of(2022,6,30))));
+				participation.getId(), 3, LocalDate.of(2022,6,30), null, null)));
 	}
 
 }

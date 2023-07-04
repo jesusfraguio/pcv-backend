@@ -16,15 +16,20 @@ public class RegisteredHoursDto {
   private Integer hours;
   @NotNull
   private LocalDate date;
+  private String volunteerName;
+  private Long volunteerId;
+  //projectName not required since usually 1 volunteer only belongs to 1 project
 
   public RegisteredHoursDto() {
   }
 
-  public RegisteredHoursDto(Long id, Long participationId, Integer hours, LocalDate date) {
+  public RegisteredHoursDto(Long id, Long participationId, Integer hours, LocalDate date, String volunteerName, Long volunteerId) {
     this.id = id;
     this.participationId = participationId;
     this.hours = hours;
     this.date = date;
+    this.volunteerName = volunteerName;
+    this.volunteerId = volunteerId;
   }
 
   public Long getId() {
@@ -57,5 +62,21 @@ public class RegisteredHoursDto {
 
   public void setDate(LocalDate date) {
     this.date = date;
+  }
+
+  public String getVolunteerName() {
+    return volunteerName;
+  }
+
+  public void setVolunteerName(String volunteerName) {
+    this.volunteerName = volunteerName;
+  }
+
+  public Long getVolunteerId() {
+    return volunteerId;
+  }
+
+  public void setVolunteerId(Long volunteerId) {
+    this.volunteerId = volunteerId;
   }
 }

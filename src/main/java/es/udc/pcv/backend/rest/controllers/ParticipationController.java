@@ -25,8 +25,10 @@ import es.udc.pcv.backend.rest.dtos.VolunteerSummaryDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -154,5 +156,15 @@ public class ParticipationController {
       RegisteredHoursDto registeredHoursDto)
       throws InstanceNotFoundException, ParticipationIsInDateException {
     return participationConversor.toRegisteredHoursDto(representativeService.createHourRegister(userId, registeredHoursDto));
+  }
+  @Operation(summary = "Gets all participation's hours register of my entity between two dates and a project (optional)")
+  @GetMapping(value = "/getAllRegisteredHours")
+  public List<RegisteredHoursDto> getAllRegisteredHours(@RequestAttribute Long userId,
+                                                        @RequestParam(required = false) Long projectId,
+                                                        @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") String startDate,
+                                                        @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") String endDate)
+      throws PermissionException, InstanceNotFoundException {
+    return participationConversor.toRegisteredHoursListDto(representativeService.findAllHoursWithinDates(userId,
+        projectId,LocalDate.parse(startDate),LocalDate.parse(endDate)));
   }
 }
