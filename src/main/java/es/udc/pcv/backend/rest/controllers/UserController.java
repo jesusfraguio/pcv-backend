@@ -128,7 +128,7 @@ public class UserController {
 
 	@Operation(summary = "create a volunteer by a representative")
 	@RequestMapping(value = "/createVolunteer", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity<Boolean> createVolunteer(@RequestAttribute Long userId,
+	public ResponseEntity<Long> createVolunteer(@RequestAttribute Long userId,
 			@RequestParam String volunteerDataDto, @RequestPart(name="dni",required = false)
 			MultipartFile dni, @RequestPart(name="harassmentCert",required = false) MultipartFile harassmentCert,
 			@RequestPart(name="cert",required = true) MultipartFile cert)
@@ -148,7 +148,7 @@ public class UserController {
 			representativeService.updateVolunteerHarassmentCert(userId,volunteer.getId(),harassmentCert);
 		}
 
-		return ResponseEntity.created(location).body(true);
+		return ResponseEntity.created(location).body(volunteer.getId());
 
 	}
 

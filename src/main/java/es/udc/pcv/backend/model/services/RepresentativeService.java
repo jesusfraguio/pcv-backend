@@ -7,16 +7,20 @@ import es.udc.pcv.backend.model.entities.File;
 import es.udc.pcv.backend.model.entities.Ods;
 import es.udc.pcv.backend.model.entities.Participation;
 import es.udc.pcv.backend.model.entities.Project;
+import es.udc.pcv.backend.model.entities.RegisteredHours;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
+import es.udc.pcv.backend.model.exceptions.ParticipationIsInDateException;
 import es.udc.pcv.backend.model.exceptions.PermissionException;
 import es.udc.pcv.backend.model.to.ResourceWithType;
 import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.ProjectDto;
 import es.udc.pcv.backend.rest.dtos.ProjectFiltersDto;
+import es.udc.pcv.backend.rest.dtos.RegisteredHoursDto;
+import es.udc.pcv.backend.rest.dtos.SelectorDataDto;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
-import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface RepresentativeService {
@@ -41,5 +45,15 @@ public interface RepresentativeService {
   File uploadVolunteerPhoto(Long userId, Long id, MultipartFile multipartFile)
       throws InstanceNotFoundException, IOException;
   Block<Volunteer> findMyEntityVolunteers(Long representativeId, PageableDto pageableDto)
+      throws InstanceNotFoundException;
+  List<RegisteredHours> findAllHoursWithinDates(Long representativeId, Long projectId, LocalDate startDate, LocalDate endDate)
+      throws InstanceNotFoundException, PermissionException;
+  List<SelectorDataDto> findAllMyEntityProjects(Long representativeId)
+      throws InstanceNotFoundException;
+  List<SelectorDataDto> findAllProjectParticipations(Long representativeId, Long projectId)
+      throws InstanceNotFoundException, PermissionException;
+  RegisteredHours createHourRegister(Long representativeId, RegisteredHoursDto registeredHoursDto)
+      throws InstanceNotFoundException, ParticipationIsInDateException;
+  boolean deleteHourRegister(Long representativeId, Long hourRegisterId)
       throws InstanceNotFoundException;
 }
