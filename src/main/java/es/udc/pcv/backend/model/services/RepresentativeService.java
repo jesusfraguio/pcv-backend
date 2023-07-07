@@ -54,4 +54,6 @@ public interface RepresentativeService {
       throws InstanceNotFoundException, PermissionException;
   RegisteredHours createHourRegister(Long representativeId, RegisteredHoursDto registeredHoursDto)
       throws InstanceNotFoundException, ParticipationIsInDateException;
+  boolean deleteHourRegister(Long representativeId, Long hourRegisterId)
+      throws InstanceNotFoundException;
 }

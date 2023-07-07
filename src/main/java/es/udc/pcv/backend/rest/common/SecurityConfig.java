@@ -60,6 +60,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers(HttpMethod.GET,"/participation/getAllPendingParticipations").hasAnyRole("ADMIN","REPRESENTATIVE")
 			.antMatchers(HttpMethod.GET,"/participation/all-my-projects").hasAnyRole("ADMIN","REPRESENTATIVE")
 			.antMatchers(HttpMethod.POST,"/participation/createHourRegister").hasAnyRole("ADMIN","REPRESENTATIVE")
+			.antMatchers(HttpMethod.DELETE,"/participation/hourRegister/*").hasAnyRole("ADMIN","REPRESENTATIVE")
 			.antMatchers(HttpMethod.GET,"/participation/getAllRegisteredHours").hasAnyRole("ADMIN","REPRESENTATIVE")
 			.antMatchers(HttpMethod.GET,"/participation/project/*/participation").hasAnyRole("ADMIN","REPRESENTATIVE")
 			.antMatchers(HttpMethod.PATCH, "/participation/*").hasAnyRole("ADMIN","REPRESENTATIVE")

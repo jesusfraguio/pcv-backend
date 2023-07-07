@@ -50,6 +50,7 @@ import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -623,7 +624,14 @@ public class RepresentativeServiceImpl implements RepresentativeService {
           new RegisteredHours(registeredHoursDto.getHours(), registeredHoursDto.getDate(),
               participation.get()));
       //update participation total hours for performance if only total hours are queried later
-      participation.get().setTotalHours(participation.get().getTotalHours() + registeredHoursResult.getHours());
+      try {
+        participation.get()
+            .setTotalHours(participation.get().getTotalHours() + registeredHoursResult.getHours());
+      }
+      catch (OptimisticLockingFailureException ex) {
+        registeredHoursDao.delete(registeredHoursResult);
+        throw new InstanceNotFoundException("project.entities.participation",participation.get().getId());
+      }
       return registeredHoursResult;
     }
     else {
@@ -631,6 +639,29 @@ public class RepresentativeServiceImpl implements RepresentativeService {
       throw new ParticipationIsInDateException();
     }
 
+  }
+
+  @Override
+  public boolean deleteHourRegister(Long representativeId, Long hourRegisterId)
+      throws InstanceNotFoundException {
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    if (!representative.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.representative", representativeId);
+    }
+    Optional<RegisteredHours> hours = registeredHoursDao.findById(
+        hourRegisterId);
+    if(!hours.isPresent()){
+      throw new InstanceNotFoundException("project.entities.registeredHours", hourRegisterId);
+    }
+    try {
+      hours.get().getParticipation()
+          .setTotalHours(hours.get().getParticipation().getTotalHours() - hours.get().getHours());
+    }
+    catch (OptimisticLockingFailureException ex) {
+      throw new InstanceNotFoundException("project.entities.registeredHours",hourRegisterId);
+    }
+    registeredHoursDao.delete(hours.get());
+    return true;
   }
 
   private Pageable pageableDtoToPageable(PageableDto pageableDto, String[] allowedSortColumns) {
