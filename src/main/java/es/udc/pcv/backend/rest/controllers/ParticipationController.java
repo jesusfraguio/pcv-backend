@@ -17,6 +17,7 @@ import es.udc.pcv.backend.rest.dtos.ParticipationDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationStatusDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationSummaryDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationWithUserDto;
+import es.udc.pcv.backend.rest.dtos.VolunteerSummaryDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
@@ -101,7 +102,8 @@ public class ParticipationController {
   public boolean addCertFile( @RequestAttribute long userId,
       @RequestParam String participationNumber, @RequestPart(name="cert",required = true)
       MultipartFile cert)
-      throws IOException, PermissionException, InstanceNotFoundException {
+      throws IOException, PermissionException, InstanceNotFoundException,
+      InvalidStatusTransitionException {
     Long realParticipationNumber = objectMapper.readValue(participationNumber, Long.class);
 
     File certFile = null;

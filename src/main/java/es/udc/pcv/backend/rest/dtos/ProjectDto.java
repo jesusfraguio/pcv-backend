@@ -9,38 +9,42 @@ public class ProjectDto {
 
   public interface AllValidations {}
 
+  public interface UpdateValidation {}
+
+  @NotNull(groups = {ProjectDto.UpdateValidation.class})
   private Long id;
   @NotNull(groups={ProjectDto.AllValidations.class})
-  @Size(min=1, max=63, groups={ProjectDto.AllValidations.class})
+  @Size(min=1, max=63, groups={ProjectDto.AllValidations.class, ProjectDto.UpdateValidation.class})
   private String name;
   @NotNull(groups={ProjectDto.AllValidations.class})
-  @Size(min=1, max=125, groups={ProjectDto.AllValidations.class})
+  @Size(min=1, max=125, groups={ProjectDto.AllValidations.class, ProjectDto.UpdateValidation.class})
   private String shortDescription;
   @NotNull(groups={ProjectDto.AllValidations.class})
-  @Size(min=1, max=480, groups={ProjectDto.AllValidations.class})
+  @Size(min=1, max=480, groups={ProjectDto.AllValidations.class, ProjectDto.UpdateValidation.class})
   private String longDescription;
   @NotNull(groups={ProjectDto.AllValidations.class})
-  @Size(min=1, max=60, groups={ProjectDto.AllValidations.class})
+  @Size(min=1, max=60, groups={ProjectDto.AllValidations.class, ProjectDto.UpdateValidation.class})
   private String locality;
   @NotNull(groups={ProjectDto.AllValidations.class})
-  @Size(min=1, max=60, groups={ProjectDto.AllValidations.class})
+  @Size(min=1, max=60, groups={ProjectDto.AllValidations.class, ProjectDto.UpdateValidation.class})
   private String schedule;
   @NotNull(groups={ProjectDto.AllValidations.class})
   private int capacity;
   @NotNull(groups={ProjectDto.AllValidations.class})
-  @Size(min=1, max=60, groups={ProjectDto.AllValidations.class})
+  @Size(min=1, max=60, groups={ProjectDto.AllValidations.class, ProjectDto.UpdateValidation.class})
   private String preferableVolunteer;
-  @NotNull(groups={ProjectDto.AllValidations.class})
+  @NotNull(groups={ProjectDto.AllValidations.class, ProjectDto.UpdateValidation.class})
   private boolean areChildren;
-  @NotNull(groups={ProjectDto.AllValidations.class})
+  @NotNull(groups={ProjectDto.AllValidations.class, ProjectDto.UpdateValidation.class})
   private boolean isVisible;
-  @NotEmpty(groups={ProjectDto.AllValidations.class})
+  private boolean isPaused;
+  @NotEmpty(groups={ProjectDto.AllValidations.class, ProjectDto.UpdateValidation.class})
   private List<@Size(min=1, max=220, groups={ProjectDto.AllValidations.class}) String> tasks;
-  @NotEmpty(groups={ProjectDto.AllValidations.class})
+  @NotEmpty(groups={ProjectDto.AllValidations.class, ProjectDto.UpdateValidation.class})
   private List<Long> ods;
-  @NotNull(groups={ProjectDto.AllValidations.class})
+  @NotNull(groups={ProjectDto.AllValidations.class, ProjectDto.UpdateValidation.class})
   private Long entityId;
-  @NotNull(groups={ProjectDto.AllValidations.class})
+  @NotNull(groups={ProjectDto.AllValidations.class, ProjectDto.UpdateValidation.class})
   private Long areaId;
   private String entityName;
   private String areaName;
@@ -50,7 +54,7 @@ public class ProjectDto {
 
   public ProjectDto(Long id, String name, String shortDescription, String longDescription,
                     String locality, String schedule, int capacity,
-                    String preferableVolunteer, boolean areChildren, boolean isVisible,
+                    String preferableVolunteer, boolean areChildren, boolean isVisible, Boolean isPaused,
                     List<@Size(min = 1, max = 220, groups = {
                         AllValidations.class}) String> tasks, List<Long> ods, Long entityId,
                     Long areaId) {
@@ -68,6 +72,7 @@ public class ProjectDto {
     this.ods = ods;
     this.entityId = entityId;
     this.areaId = areaId;
+    this.isPaused = isPaused;
   }
 
   public Long getId() {
@@ -196,5 +201,13 @@ public class ProjectDto {
 
   public void setAreaName(String areaName) {
     this.areaName = areaName;
+  }
+
+  public boolean isPaused() {
+    return isPaused;
+  }
+
+  public void setPaused(boolean paused) {
+    isPaused = paused;
   }
 }

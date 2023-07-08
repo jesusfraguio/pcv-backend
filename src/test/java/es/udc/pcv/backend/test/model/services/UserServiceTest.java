@@ -2,12 +2,13 @@ package es.udc.pcv.backend.test.model.services;
 
 import es.udc.pcv.backend.model.entities.CollaborationArea;
 import es.udc.pcv.backend.model.entities.Entidad;
-import es.udc.pcv.backend.model.entities.EntidadDao;
 import es.udc.pcv.backend.model.entities.Ods;
 import es.udc.pcv.backend.model.entities.Participation;
 import es.udc.pcv.backend.model.entities.Project;
 import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
+import es.udc.pcv.backend.model.exceptions.PermissionException;
+import es.udc.pcv.backend.model.exceptions.ProjectIsPausedException;
 import es.udc.pcv.backend.model.services.AdminService;
 import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.services.VolunteerService;
@@ -71,7 +72,7 @@ public class UserServiceTest {
 
 	private ProjectDto createProjectDto(String name, List<String> task, List<Long> ods,long entityId, long areaId){
 		ProjectDto projectDto = new ProjectDto(null,name,"Descripción corta","Detalle de las tareas","A Coruña","Lunes y Martes de 10:30 a 12:30",
-				10,"Sin preferencias",false,true,task,ods,entityId,areaId);
+				10,"Sin preferencias",false,true,false,task,ods,entityId,areaId);
 		return projectDto;
 	}
 
@@ -230,7 +231,7 @@ public class UserServiceTest {
 	@Test
 	public void createParticipation()
 			throws InstanceNotFoundException, DuplicateInstanceException, IncorrectLoginException,
-			AlreadyParticipatingException {
+			AlreadyParticipatingException, PermissionException, ProjectIsPausedException {
 		User userBasic = createUser("user@gmail.com");
 		String clearPassword = userBasic.getPassword();
 
@@ -256,7 +257,7 @@ public class UserServiceTest {
 		ProjectDto projectDto = createProjectDto("Proyecto X",tasks,itemIds,representative.getEntity().getId(),collaborationAreas.get(0).getId());
 		Project project = representativeService.createProject(projectDto,userId);
 		ParticipationDto participationDto = new ParticipationDto(false,project.getId(),loggedInUser.getId());
-		Participation participation = volunteerService.createParticipation(participationDto);
+		Participation participation = volunteerService.createMyParticipation(participationDto,loggedInUser.getId());
 		assertEquals(participation.getProject(),project);
 		assertEquals(participation.getVolunteer().getUser().getId(),loggedInUser.getId());
 		assertFalse(participation.isRecommended());

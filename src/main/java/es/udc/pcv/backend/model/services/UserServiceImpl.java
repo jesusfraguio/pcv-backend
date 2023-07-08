@@ -204,7 +204,7 @@ public class UserServiceImpl implements UserService {
 	public void sendEmailWithToken(User user, String token) {
 		SimpleMailMessage message = new SimpleMailMessage();
 		message.setFrom(originEmail);
-		String fullPath = "https://localhost:3000/users/validate/registerToken/"+token;
+		String fullPath = "https://pcv-front.onrender.com/users/validate/registerToken/"+token;
 		String bodyMessage = "Para darse de alta en PlataformaCoruñesaDeVoluntariado introduzca una nueva contraseña en el siguiente enlace\n"+
 				"Este enlace tendrá una validez de 1 hora.\n"+fullPath+"\n" +
 				"Si ha recibido por error este mensaje ignorélo por favor";
@@ -230,7 +230,8 @@ public class UserServiceImpl implements UserService {
 			throw new InstanceNotFoundException("project.entities.volunteer",userId);
 		}
 		//no relationship beetween entity and volunteer
-		if(!participationDao.existsByProjectEntityIdAndVolunteerId(entidad.getId(),userId)){
+		if(!(participationDao.existsByProjectEntityIdAndVolunteerId(entidad.getId(),userId) || fileDao.existsByVolunteerAndFileTypeAndEntidad(volunteer.get(),
+				File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH, entidad))){
 			throw new InstanceNotFoundException("project.entities.volunteer",userId);
 		}
 		User user = volunteer.get().getUser();
@@ -250,7 +251,10 @@ public class UserServiceImpl implements UserService {
 				File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH);
 		Optional<File> harassmentFile = fileDao.findByVolunteerAndFileType(volunteer.get(),
 				File.FileType.HARASSMENT_CERT);
-		return new VolunteerEntityFilesDto(certFile.isPresent(), harassmentFile.isPresent());
+		Optional<File> dniFile = fileDao.findByVolunteerAndFileType(volunteer.get(), File.FileType.DNI);
+		Optional<File> photoFile = fileDao.findByVolunteerAndFileType(volunteer.get(), File.FileType.PHOTO);
+		return new VolunteerEntityFilesDto(certFile.isPresent(), harassmentFile.isPresent(),
+				dniFile.isPresent(), photoFile.isPresent());
 
 
 	}

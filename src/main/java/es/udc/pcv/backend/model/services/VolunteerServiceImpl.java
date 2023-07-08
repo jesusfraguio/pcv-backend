@@ -15,6 +15,7 @@ import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.exceptions.InvalidStatusTransitionException;
 import es.udc.pcv.backend.model.exceptions.PermissionException;
+import es.udc.pcv.backend.model.exceptions.ProjectIsPausedException;
 import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationStatusDto;
@@ -52,11 +53,43 @@ public class VolunteerServiceImpl implements VolunteerService {
   private FileDao fileDao;
 
   @Override
-  public Participation createParticipation(ParticipationDto participationData) throws
-      InstanceNotFoundException, AlreadyParticipatingException {
+  public Participation createMyParticipation(ParticipationDto participationData, Long userId) throws
+      InstanceNotFoundException, AlreadyParticipatingException, PermissionException,
+      ProjectIsPausedException{
     Optional<Volunteer> volunteer = volunteerDao.findByUserId(participationData.getVolunteerId());
     if(!volunteer.isPresent()){
       throw new InstanceNotFoundException("project.entities.volunteer",participationData.getVolunteerId());
+    }
+    //basic user who is not representative trying to bypass system
+    if(volunteer.get().getUser().getId().longValue() != userId.longValue()){
+      throw new PermissionException();
+    }
+    Optional<Project> project = projectDao.findById(participationData.getProjectId());
+    if(!project.isPresent()){
+      throw new InstanceNotFoundException("project.entities.project",participationData.getProjectId());
+    }
+    if(project.get().isPaused() || !project.get().isVisible()){
+      throw new ProjectIsPausedException();
+    }
+    if(participationDao.findByProjectIdAndVolunteerId(project.get().getId(),volunteer.get().getId()).isPresent()){
+      throw new AlreadyParticipatingException();
+    }
+    return participationDao.save(new Participation(0, Participation.ParticipationState.PENDING,
+        participationData.isRecommended(), LocalDate.now(),project.get(),volunteer.get()));
+  }
+
+  @Override
+  public Participation createParticipation(ParticipationDto participationData, Long representativeId)
+      throws InstanceNotFoundException, AlreadyParticipatingException, PermissionException {
+    Optional<Volunteer> volunteer = volunteerDao.findById(participationData.getVolunteerId());
+    if(!volunteer.isPresent()){
+      throw new InstanceNotFoundException("project.entities.volunteer",participationData.getVolunteerId());
+    }
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    // no need check isPresent since this endpoint is only for representatives
+    if(!((fileDao.existsByVolunteerAndFileTypeAndEntidad(volunteer.get(), File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH,representative.get().getEntity())
+    ) || (participationDao.existsByProjectEntityIdAndVolunteerId(representative.get().getEntity().getId(),volunteer.get().getId())))){
+      throw new PermissionException();
     }
     Optional<Project> project = projectDao.findById(participationData.getProjectId());
     if(!project.isPresent()){
@@ -65,7 +98,7 @@ public class VolunteerServiceImpl implements VolunteerService {
     if(participationDao.findByProjectIdAndVolunteerId(project.get().getId(),volunteer.get().getId()).isPresent()){
       throw new AlreadyParticipatingException();
     }
-    return participationDao.save(new Participation(0, Participation.ParticipationState.PENDING,
+    return participationDao.save(new Participation(0, Participation.ParticipationState.SCHEDULED,
         participationData.isRecommended(), LocalDate.now(),project.get(),volunteer.get()));
   }
 
@@ -122,6 +155,16 @@ public class VolunteerServiceImpl implements VolunteerService {
             .getVolunteer(), File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH).isPresent())) {
           throw new InvalidStatusTransitionException(currentStatus.getValue(), updatedStatus.getValue());
         }
+        // there are children -> law requirement requires volunteer harassment certificate
+        if (updatedStatus == Participation.ParticipationState.ACCEPTED && participation.get().getProject().isAreChildren()
+            && !(fileDao.findByVolunteerAndFileType(participation.get().getVolunteer(), File.FileType.HARASSMENT_CERT).isPresent())){
+          throw new InvalidStatusTransitionException(currentStatus.getValue(), updatedStatus.getValue(), File.FileType.HARASSMENT_CERT.toString());
+        }
+        //scanned dni is required to accept a participation
+        if(updatedStatus == Participation.ParticipationState.ACCEPTED
+            && !(fileDao.findByVolunteerAndFileType(participation.get().getVolunteer(), File.FileType.DNI).isPresent())){
+          throw new InvalidStatusTransitionException(currentStatus.getValue(), updatedStatus.getValue(), File.FileType.DNI.toString());
+        }
         if (updatedStatus != Participation.ParticipationState.ACCEPTED && updatedStatus != Participation.ParticipationState.DELETED) {
           throw new InvalidStatusTransitionException(currentStatus.getValue(), updatedStatus.getValue());
         }
@@ -145,7 +188,8 @@ public class VolunteerServiceImpl implements VolunteerService {
   @Override
   public File updateMyParticipationCertFile(Long userId, Long id,
                                              MultipartFile multipartFile)
-      throws InstanceNotFoundException, PermissionException, IOException {
+      throws InstanceNotFoundException, PermissionException, IOException,
+      InvalidStatusTransitionException {
     Optional<Participation> participationOpt = participationDao.findById(id);
     if(!participationOpt.isPresent()){
       throw new InstanceNotFoundException("project.entities.participation",id);
@@ -153,6 +197,19 @@ public class VolunteerServiceImpl implements VolunteerService {
     User user1 = participationOpt.get().getVolunteer().getUser();
     if(!(user1 != null && userId == user1.getId())){
       throw new PermissionException();
+    }
+    Participation participation = participationOpt.get();
+    //there must be a harassment cert
+    if(participation.getProject().isAreChildren() &&
+        !(fileDao.findByVolunteerAndFileType(participation.getVolunteer(), File.FileType.HARASSMENT_CERT).isPresent())){
+      throw new InvalidStatusTransitionException(Participation.ParticipationState.APPROVED.getValue(),
+          Participation.ParticipationState.ACCEPTED.getValue(), File.FileType.HARASSMENT_CERT.toString());
+    }
+    //there must be a scanned dni
+    if(participation.getState() == Participation.ParticipationState.APPROVED &&
+        !(fileDao.findByVolunteerAndFileType(participation.getVolunteer(), File.FileType.DNI).isPresent())){
+      throw new InvalidStatusTransitionException(Participation.ParticipationState.APPROVED.getValue(),
+          Participation.ParticipationState.ACCEPTED.getValue(), File.FileType.DNI.toString());
     }
     String uploadDir = "./participations/certFiles/";
     java.io.File dir = new java.io.File(uploadDir);
@@ -172,7 +229,6 @@ public class VolunteerServiceImpl implements VolunteerService {
     Files.copy(multipartFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
     File saved = fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH,
         extension,participationOpt.get().getProject().getEntity(),participationOpt.get().getVolunteer()));
-    Participation participation = participationOpt.get();
     if(participation.getState()== Participation.ParticipationState.APPROVED){
       participation.setState(Participation.ParticipationState.ACCEPTED);
     }

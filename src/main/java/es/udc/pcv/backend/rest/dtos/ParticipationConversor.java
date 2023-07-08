@@ -26,6 +26,7 @@ public interface ParticipationConversor {
   @Mapping(target = "projectId", source = "project.id")
   @Mapping(target = "volunteerId", source = "volunteer.id")
   @Mapping(target = "status", source = "state")
+  @Mapping(target = "entityId", source = "project.entity.id")
   ParticipationSummaryDto toParticipationSummaryDto(Participation participation);
 
   Block<ParticipationSummaryDto> toParticipationBlockDto(Block<Participation> projectBlock);

@@ -7,6 +7,8 @@ import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.model.exceptions.AlreadyParticipatingException;
 import es.udc.pcv.backend.model.exceptions.DuplicateInstanceException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
+import es.udc.pcv.backend.model.exceptions.PermissionException;
+import es.udc.pcv.backend.model.exceptions.ProjectIsPausedException;
 import es.udc.pcv.backend.model.services.Block;
 import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.services.UserService;
@@ -33,12 +35,14 @@ import javax.validation.Valid;
 import javax.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -66,7 +70,22 @@ public class ProjectController {
   @Operation(summary = "create a project")
   @PostMapping("/createProject")
   public ResponseEntity<ProjectDto> createProject(
-      @Validated({ProjectDto.AllValidations.class}) @RequestAttribute Long userId, @RequestBody ProjectDto projectDto)
+      @RequestAttribute Long userId, @Validated({ProjectDto.AllValidations.class}) @RequestBody ProjectDto projectDto)
+      throws InstanceNotFoundException {
+
+    ProjectDto savedProjectDto = entityConversor.toProjectDto(representativeService.createProject(projectDto,userId));
+
+    URI location = ServletUriComponentsBuilder
+        .fromCurrentRequest().path("/{id}")
+        .buildAndExpand(savedProjectDto.getId()).toUri();
+
+    return ResponseEntity.created(location).body(savedProjectDto);
+
+  }
+  @Operation(summary = "updates a project")
+  @PostMapping("/updateProject")
+  public ResponseEntity<ProjectDto> updateProject(
+      @RequestAttribute Long userId, @Validated({ProjectDto.UpdateValidation.class}) @RequestBody ProjectDto projectDto)
       throws InstanceNotFoundException {
 
     ProjectDto savedProjectDto = entityConversor.toProjectDto(representativeService.createProject(projectDto,userId));
@@ -121,6 +140,22 @@ public class ProjectController {
     else mediaType = MediaType.IMAGE_JPEG;
     return ResponseEntity.ok()
         .contentType(mediaType)
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getResource().getFilename() + "\"")
+        .body(resource.getResource());
+  }
+
+  @Operation(summary = "get an entity's agreement file (only logged users)")
+  @GetMapping("/getAgreementFile/{id}")
+  public ResponseEntity<Resource> getAgreementFile(@RequestAttribute Long userId, @PathVariable Long id) throws InstanceNotFoundException {
+    ResourceWithType resource = representativeService.getAgreementFile(id);
+    MediaType mediaType;
+    if(resource.getExtension().equals("pdf")){
+      mediaType = MediaType.APPLICATION_PDF;
+    }
+    else mediaType = MediaType.APPLICATION_OCTET_STREAM;
+    return ResponseEntity.ok()
+        .contentType(mediaType)
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + "CopiaDeArchivoCompromiso" + "\"")
         .body(resource.getResource());
   }
 
@@ -136,13 +171,31 @@ public class ProjectController {
     return entityConversor.toProjectBlockDto(representativeService.getMyEntityProjects(userId,pageableDto));
   }
 
-  @Operation(summary = "create a participation")
+  @Operation(summary = "create a participation for myself (the user who is requesting)")
   @PostMapping("/createMyParticipation")
   public ResponseEntity<ParticipationDto> createMyParticipation(
-      @Validated({ParticipationDto.AllValidations.class}) @RequestBody ParticipationDto participationDto)
-      throws InstanceNotFoundException, AlreadyParticipatingException {
+      @Validated({ParticipationDto.AllValidations.class}) @RequestBody ParticipationDto participationDto, @RequestAttribute Long userId)
+      throws InstanceNotFoundException, AlreadyParticipatingException, PermissionException,
+      ProjectIsPausedException {
 
-    ParticipationDto savedParticipationDto = participationConversor.toParticipationDto(volunteerService.createParticipation(participationDto));
+    ParticipationDto savedParticipationDto = participationConversor.toParticipationDto(volunteerService.createMyParticipation(participationDto, userId));
+
+    URI location = ServletUriComponentsBuilder
+        .fromCurrentRequest().path("/{id}")
+        .buildAndExpand(participationDto.getId()).toUri();
+
+    return ResponseEntity.created(location).body(savedParticipationDto);
+
+  }
+
+  @Operation(summary = "create a participation for my volunteer" )
+  @PostMapping("/representative/createParticipation")
+  public ResponseEntity<ParticipationDto> addVolunteerToProject(
+      @Validated({ParticipationDto.AllValidations.class}) @RequestBody ParticipationDto participationDto,
+      @RequestAttribute Long userId)
+      throws InstanceNotFoundException, AlreadyParticipatingException, PermissionException {
+
+    ParticipationDto savedParticipationDto = participationConversor.toParticipationDto(volunteerService.createParticipation(participationDto,userId));
 
     URI location = ServletUriComponentsBuilder
         .fromCurrentRequest().path("/{id}")
