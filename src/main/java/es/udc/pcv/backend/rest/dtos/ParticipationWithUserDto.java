@@ -18,6 +18,7 @@ public class ParticipationWithUserDto {
     this.projectName = projectName;
     this.volunteerId = volunteerId;
     this.volunteerName = volunteerName;
+    this.volunteerSurname = volunteerSurname;
     this.totalHours = totalHours;
     this.status = status;
   }

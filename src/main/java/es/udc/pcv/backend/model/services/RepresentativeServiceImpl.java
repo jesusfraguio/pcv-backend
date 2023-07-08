@@ -13,19 +13,23 @@ import es.udc.pcv.backend.model.entities.ParticipationDao;
 import es.udc.pcv.backend.model.entities.Project;
 import es.udc.pcv.backend.model.entities.ProjectDao;
 import es.udc.pcv.backend.model.entities.ProjectSpecifications;
+import es.udc.pcv.backend.model.entities.RegisteredHours;
+import es.udc.pcv.backend.model.entities.RegisteredHoursDao;
 import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.entities.RepresentativeDao;
 import es.udc.pcv.backend.model.entities.Task;
 import es.udc.pcv.backend.model.entities.TaskDao;
-import es.udc.pcv.backend.model.entities.User;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.model.entities.VolunteerDao;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
+import es.udc.pcv.backend.model.exceptions.ParticipationIsInDateException;
 import es.udc.pcv.backend.model.exceptions.PermissionException;
 import es.udc.pcv.backend.model.to.ResourceWithType;
 import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.ProjectDto;
 import es.udc.pcv.backend.rest.dtos.ProjectFiltersDto;
+import es.udc.pcv.backend.rest.dtos.RegisteredHoursDto;
+import es.udc.pcv.backend.rest.dtos.SelectorDataDto;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -33,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -41,11 +46,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -56,7 +61,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Transactional
-public class RepresentativeServiceImpl implements RepresentativeService{
+public class RepresentativeServiceImpl implements RepresentativeService {
   @Autowired
   private ProjectDao projectDao;
 
@@ -84,16 +89,21 @@ public class RepresentativeServiceImpl implements RepresentativeService{
   @Autowired
   private VolunteerDao volunteerDao;
 
+  @Autowired
+  private RegisteredHoursDao registeredHoursDao;
+
   @Override
   public Project createProject(ProjectDto projectDto, long userId)
       throws InstanceNotFoundException {
     Optional<Representative> user = representativeDao.findById(userId);
-    if(!user.isPresent() || user.get().getEntity().getId()!=projectDto.getEntityId()){
+    if (!user.isPresent() || user.get().getEntity().getId() != projectDto.getEntityId()) {
       throw new InstanceNotFoundException("project.entities.entity", projectDto.getEntityId());
     }
-    Optional<CollaborationArea> collaborationArea = collaborationAreaDao.findById(projectDto.getAreaId());
-    if(!collaborationArea.isPresent()){
-      throw new InstanceNotFoundException("project.entities.collaborationArea", projectDto.getAreaId());
+    Optional<CollaborationArea> collaborationArea =
+        collaborationAreaDao.findById(projectDto.getAreaId());
+    if (!collaborationArea.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.collaborationArea",
+          projectDto.getAreaId());
     }
 
     Set<Ods> odsList = projectDto.getOds().stream()
@@ -101,26 +111,29 @@ public class RepresentativeServiceImpl implements RepresentativeService{
         .filter(Optional::isPresent)
         .map(Optional::get)
         .collect(Collectors.toSet());
-    if(odsList.isEmpty()){
-      throw new InstanceNotFoundException("project.entities.ods",projectDto.getOds().get(0));
+    if (odsList.isEmpty()) {
+      throw new InstanceNotFoundException("project.entities.ods", projectDto.getOds().get(0));
     }
 
-    Project project = new Project(projectDto.getName(),projectDto.getShortDescription(),projectDto.getLongDescription(),
-        projectDto.getLocality(),projectDto.getSchedule(),projectDto.getCapacity(),projectDto.getPreferableVolunteer(),
-        projectDto.isAreChildren(),projectDto.isVisible(),projectDto.isPaused(),entidadDao.findById(projectDto.getEntityId()).get(),collaborationArea.get());
+    Project project = new Project(projectDto.getName(), projectDto.getShortDescription(),
+        projectDto.getLongDescription(),
+        projectDto.getLocality(), projectDto.getSchedule(), projectDto.getCapacity(),
+        projectDto.getPreferableVolunteer(),
+        projectDto.isAreChildren(), projectDto.isVisible(), projectDto.isPaused(),
+        entidadDao.findById(projectDto.getEntityId()).get(), collaborationArea.get());
     project.setOds(odsList);
-    if(projectDto.getId() != null){
+    if (projectDto.getId() != null) {
       //for updating
       project.setId(projectDto.getId());
     }
     project = projectDao.save(project);
-    if(projectDto.getId() != null){
+    if (projectDto.getId() != null) {
       project.setTasks(null);
       taskDao.deleteAllByProjectId(projectDto.getId());
     }
     List<Task> taskList = new ArrayList<>();
-    for (String name : projectDto.getTasks()){
-      taskList.add(taskDao.save(new Task(name,project)));
+    for (String name : projectDto.getTasks()) {
+      taskList.add(taskDao.save(new Task(name, project)));
     }
     project.setTasks(taskList);
     projectDao.save(project);
@@ -144,7 +157,8 @@ public class RepresentativeServiceImpl implements RepresentativeService{
 
   @Override
   public List<CollaborationArea> getAllCollaborationArea() {
-    Iterable<CollaborationArea> areas = collaborationAreaDao.findAll(Sort.by(Sort.Direction.ASC, "name"));
+    Iterable<CollaborationArea> areas =
+        collaborationAreaDao.findAll(Sort.by(Sort.Direction.ASC, "name"));
     List<CollaborationArea> areasAsList = new ArrayList<>();
 
     areas.forEach(areasAsList::add);
@@ -156,45 +170,26 @@ public class RepresentativeServiceImpl implements RepresentativeService{
   public Block<Project> findProjectsBy(ProjectFiltersDto projectFiltersDto,
                                        PageableDto pageableDto) {
     String[] allowedSortColumns = {"name", "locality", "collaborationAreaId"};
-    Pageable pageable = pageableDtoToPageable(pageableDto,allowedSortColumns);
+    Pageable pageable = pageableDtoToPageable(pageableDto, allowedSortColumns);
     Page<Project> projectsPage = projectDao.findAll(
-        ProjectSpecifications.searchProjects(projectFiltersDto.getName(), projectFiltersDto.getLocality(), projectFiltersDto.getCollaborationAreaId()), pageable);
+        ProjectSpecifications.searchProjects(projectFiltersDto.getName(),
+            projectFiltersDto.getLocality(), projectFiltersDto.getCollaborationAreaId()), pageable);
 
-    return new Block<>(projectsPage.getContent(),projectsPage.hasNext());
+    return new Block<>(projectsPage.getContent(), projectsPage.hasNext());
   }
 
   @Override
   public ResourceWithType getLogo(Long entityId) throws InstanceNotFoundException {
     Optional<Entidad> entity = entidadDao.findById(entityId);
-    if(!entity.isPresent()){
+    if (!entity.isPresent()) {
       throw new InstanceNotFoundException("project.entities.entity", entityId);
     }
     File file = entity.get().getLogo();
-    if(file==null){
+    if (file == null) {
       throw new InstanceNotFoundException("project.entities.fileLogo", entityId);
     }
-    java.io.File savedFile = new java.io.File("./entities/logos/"+file.getId()+"."+file.getExtension());
-
-    Resource resource;
-    try {
-       resource = new UrlResource(savedFile.toURI());
-    } catch (MalformedURLException e) {
-      throw new InstanceNotFoundException("project.entities.entity", entityId);
-    }
-    return new ResourceWithType(resource,file.getExtension());
-  }
-
-  @Override
-  public ResourceWithType getAgreementFile(Long entityId) throws InstanceNotFoundException {
-    Optional<Entidad> entity = entidadDao.findById(entityId);
-    if(!entity.isPresent()){
-      throw new InstanceNotFoundException("project.entities.entity", entityId);
-    }
-    File file = entity.get().getCertFile();
-    if(file==null){
-      throw new InstanceNotFoundException("project.entities.fileCert", entityId);
-    }
-    java.io.File savedFile = new java.io.File("./entities/certs/"+file.getId()+"."+file.getExtension());
+    java.io.File savedFile =
+        new java.io.File("./entities/logos/" + file.getId() + "." + file.getExtension());
 
     Resource resource;
     try {
@@ -202,7 +197,29 @@ public class RepresentativeServiceImpl implements RepresentativeService{
     } catch (MalformedURLException e) {
       throw new InstanceNotFoundException("project.entities.entity", entityId);
     }
-    return new ResourceWithType(resource,file.getExtension());
+    return new ResourceWithType(resource, file.getExtension());
+  }
+
+  @Override
+  public ResourceWithType getAgreementFile(Long entityId) throws InstanceNotFoundException {
+    Optional<Entidad> entity = entidadDao.findById(entityId);
+    if (!entity.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.entity", entityId);
+    }
+    File file = entity.get().getCertFile();
+    if (file == null) {
+      throw new InstanceNotFoundException("project.entities.fileCert", entityId);
+    }
+    java.io.File savedFile =
+        new java.io.File("./entities/certs/" + file.getId() + "." + file.getExtension());
+
+    Resource resource;
+    try {
+      resource = new UrlResource(savedFile.toURI());
+    } catch (MalformedURLException e) {
+      throw new InstanceNotFoundException("project.entities.entity", entityId);
+    }
+    return new ResourceWithType(resource, file.getExtension());
   }
 
   @Override
@@ -210,24 +227,25 @@ public class RepresentativeServiceImpl implements RepresentativeService{
       throws InstanceNotFoundException {
     File.FileType requestedFile = File.FileType.valueOf(fileType);
     Optional<Volunteer> volunteer = volunteerDao.findById(volunteerId);
-    if(!volunteer.isPresent()){
+    if (!volunteer.isPresent()) {
       throw new InstanceNotFoundException("project.entities.volunteer", volunteerId);
     }
     Optional<Representative> representative = representativeDao.findById(representativeId);
     //if there is no permission volunteer does not exist
-    if(!(fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(), volunteer.get(),
-        File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH).isPresent())){
-      throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
+    if (!(fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(),
+        volunteer.get(),
+        File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH).isPresent())) {
+      throw new InstanceNotFoundException("project.entities.volunteer", volunteerId);
     }
     Optional<File> file;
-    if(requestedFile.equals(File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH)){
-      file = fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(),volunteer.get(),requestedFile);
+    if (requestedFile.equals(File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH)) {
+      file = fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(),
+          volunteer.get(), requestedFile);
+    } else {
+      file = fileDao.findByVolunteerAndFileType(volunteer.get(), requestedFile);
     }
-    else{
-      file = fileDao.findByVolunteerAndFileType(volunteer.get(),requestedFile);
-    }
-    if (!file.isPresent()){
-      throw new InstanceNotFoundException("project.entities.file",volunteerId);
+    if (!file.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.file", volunteerId);
     }
 
     Resource resource;
@@ -237,17 +255,16 @@ public class RepresentativeServiceImpl implements RepresentativeService{
     } catch (MalformedURLException e) {
       throw new InstanceNotFoundException("project.entities.volunteer", volunteerId);
     }
-    return new ResourceWithType(resource,file.get().getExtension());
+    return new ResourceWithType(resource, file.get().getExtension());
 
   }
 
   @Override
   public Project getProject(long projectId) throws InstanceNotFoundException {
     Optional<Project> project = projectDao.findById(projectId);
-    if(!project.isPresent()){
+    if (!project.isPresent()) {
       throw new InstanceNotFoundException("project.entities.project", projectId);
-    }
-    else{
+    } else {
       return project.get();
     }
   }
@@ -256,37 +273,41 @@ public class RepresentativeServiceImpl implements RepresentativeService{
   public Block<Project> getMyEntityProjects(Long representativeId, PageableDto pageableDto)
       throws InstanceNotFoundException {
     Optional<Representative> representative = representativeDao.findById(representativeId);
-    if(!representative.isPresent()){
-      throw new InstanceNotFoundException("project.entities.representative",representativeId);
+    if (!representative.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.representative", representativeId);
     }
-    Page<Project> projectPage = projectDao.findAllByEntityId(representative.get().getEntity().getId(),
-        PageRequest.of(pageableDto.getPage(), pageableDto.getSize()));
-    return new Block<>(projectPage.getContent(),projectPage.hasNext());
+    Page<Project> projectPage =
+        projectDao.findAllByEntityId(representative.get().getEntity().getId(),
+            PageRequest.of(pageableDto.getPage(), pageableDto.getSize()));
+    return new Block<>(projectPage.getContent(), projectPage.hasNext());
   }
 
   @Override
-  public Block<Participation> findAllPendingParticipation(Long representativeId, PageableDto pageableDto)
+  public Block<Participation> findAllPendingParticipation(Long representativeId,
+                                                          PageableDto pageableDto)
       throws InstanceNotFoundException {
     Optional<Representative> representative = representativeDao.findById(representativeId);
-    if(!representative.isPresent()){
-      throw new InstanceNotFoundException("project.entities.representative",representativeId);
+    if (!representative.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.representative", representativeId);
     }
     Page<Participation> participationPage = participationDao.findAllByProjectEntityIdAndState(
         representative.get().getEntity().getId(),
-        Participation.ParticipationState.PENDING,PageRequest.of(pageableDto.getPage(), pageableDto.getSize()));
+        Participation.ParticipationState.PENDING,
+        PageRequest.of(pageableDto.getPage(), pageableDto.getSize()));
 
-    return new Block<>(participationPage.getContent(),participationPage.hasNext());
+    return new Block<>(participationPage.getContent(), participationPage.hasNext());
   }
 
   @Override
-  public Block<Participation> findAllProjectParticipation(Long representativeId, Long projectId, PageableDto pageableDto)
+  public Block<Participation> findAllProjectParticipation(Long representativeId, Long projectId,
+                                                          PageableDto pageableDto)
       throws InstanceNotFoundException {
     Optional<Representative> representative = representativeDao.findById(representativeId);
-    if(!representative.isPresent()){
-      throw new InstanceNotFoundException("project.entities.representative",representativeId);
+    if (!representative.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.representative", representativeId);
     }
     Project project = getProject(projectId);
-    if(project.getEntity().getId()!=representative.get().getEntity().getId()){
+    if (project.getEntity().getId() != representative.get().getEntity().getId()) {
       // Administrador no podra ver participaciones de otras entidades
       throw new InstanceNotFoundException("project.entities.project", projectId);
     }
@@ -297,18 +318,19 @@ public class RepresentativeServiceImpl implements RepresentativeService{
     Page<Participation> participationPage = participationDao.findAllByProjectId(
         projectId, pageable);
 
-    return new Block<>(participationPage.getContent(),participationPage.hasNext());
+    return new Block<>(participationPage.getContent(), participationPage.hasNext());
   }
 
   @Override
   public File updateVolunteerCertFile(Long userId, Long id, MultipartFile multipartFile)
       throws InstanceNotFoundException, PermissionException, IOException {
     Optional<Participation> participationOpt = participationDao.findById(id);
-    if(!participationOpt.isPresent()){
-      throw new InstanceNotFoundException("project.entities.participation",id);
+    if (!participationOpt.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.participation", id);
     }
     Optional<Representative> representative = representativeDao.findById(userId);
-    if(!(representative.isPresent() && representative.get().getEntity().getId()==participationOpt.get().getProject().getEntity().getId())){
+    if (!(representative.isPresent() && representative.get().getEntity().getId() ==
+        participationOpt.get().getProject().getEntity().getId())) {
       throw new PermissionException();
     }
     String uploadDir = "./participations/certFiles/";
@@ -327,10 +349,21 @@ public class RepresentativeServiceImpl implements RepresentativeService{
       throw new IOException("File already exists: " + filePath);
     }
     Files.copy(multipartFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-    File saved = fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH,
-        extension,representative.get().getEntity(), participationOpt.get().getVolunteer()));
+    Optional<File> oldFile = fileDao.findByEntidadAndVolunteerAndFileType(
+        participationOpt.get().getProject().getEntity(),
+        participationOpt.get().getVolunteer(), File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH);
+    if (oldFile.isPresent()) {
+      File newFile = oldFile.get();
+      Path path = Paths.get("./participations/certFiles/" + newFile.getId().toString() + "." +
+          newFile.getExtension());
+      fileDao.delete(newFile);
+      Files.delete(path);
+    }
+    File saved = fileDao.save(new File(randomUIID, new Date(), multipartFile.getOriginalFilename(),
+        File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH,
+        extension, representative.get().getEntity(), participationOpt.get().getVolunteer()));
     Participation participation = participationOpt.get();
-    if(participation.getState()== Participation.ParticipationState.APPROVED){
+    if (participation.getState() == Participation.ParticipationState.APPROVED) {
       participation.setState(Participation.ParticipationState.ACCEPTED);
     }
     return saved;
@@ -343,21 +376,22 @@ public class RepresentativeServiceImpl implements RepresentativeService{
     String uploadDir = "./users/harassmentCert/";
     java.io.File dir = new java.io.File(uploadDir);
     if (!dir.exists()) {
-      if(!dir.mkdirs()){
+      if (!dir.mkdirs()) {
         throw new IOException("Could not create path: " + dir.getPath());
       }
     }
     Optional<Volunteer> volunteer = volunteerDao.findById(volunteerId);
-    if(!volunteer.isPresent()){
-      throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
+    if (!volunteer.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.volunteer", volunteerId);
     }
     Optional<Representative> representative = representativeDao.findById(representativeId);
-    if(!representative.isPresent()){
-      throw new InstanceNotFoundException("project.entities.representative",representativeId);
+    if (!representative.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.representative", representativeId);
     }
-    if(!(fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(), volunteer.get(),
-        File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH).isPresent())){
-      throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
+    if (!(fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(),
+        volunteer.get(),
+        File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH).isPresent())) {
+      throw new InstanceNotFoundException("project.entities.volunteer", volunteerId);
     }
     InputStream inputStream = multipartFile.getInputStream();
     Tika tika = new Tika();
@@ -370,15 +404,18 @@ public class RepresentativeServiceImpl implements RepresentativeService{
       throw new IOException("File already exists: " + filePath);
     }
     Files.copy(multipartFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-    Optional<File> oldFile = fileDao.findByVolunteerAndFileType(volunteer.get(), File.FileType.HARASSMENT_CERT);
+    Optional<File> oldFile =
+        fileDao.findByVolunteerAndFileType(volunteer.get(), File.FileType.HARASSMENT_CERT);
     if (oldFile.isPresent()) {
       File newFile = oldFile.get();
-      Path path = Paths.get("./users/harassmentCert/" + newFile.getId().toString() + "." + newFile.getExtension());
+      Path path = Paths.get(
+          "./users/harassmentCert/" + newFile.getId().toString() + "." + newFile.getExtension());
       fileDao.delete(newFile);
       Files.delete(path);
     }
-    return fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),File.FileType.HARASSMENT_CERT,
-        extension,null,volunteer.get()));
+    return fileDao.save(new File(randomUIID, new Date(), multipartFile.getOriginalFilename(),
+        File.FileType.HARASSMENT_CERT,
+        extension, null, volunteer.get()));
   }
 
   @Override
@@ -390,17 +427,18 @@ public class RepresentativeServiceImpl implements RepresentativeService{
       dir.mkdirs();
     }
     Optional<Volunteer> volunteer = volunteerDao.findById(volunteerId);
-    if(!volunteer.isPresent()){
-      throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
+    if (!volunteer.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.volunteer", volunteerId);
     }
     Optional<Representative> representative = representativeDao.findById(representativeId);
-    if(!representative.isPresent()){
-      throw new InstanceNotFoundException("project.entities.representative",representativeId);
+    if (!representative.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.representative", representativeId);
     }
     //if there is no permission volunteer does not exist
-    if(!(fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(), volunteer.get(),
-        File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH).isPresent())){
-      throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
+    if (!(fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(),
+        volunteer.get(),
+        File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH).isPresent())) {
+      throw new InstanceNotFoundException("project.entities.volunteer", volunteerId);
     }
     InputStream inputStream = dni.getInputStream();
     Tika tika = new Tika();
@@ -416,12 +454,14 @@ public class RepresentativeServiceImpl implements RepresentativeService{
     Optional<File> oldFile = fileDao.findByVolunteerAndFileType(volunteer.get(), File.FileType.DNI);
     if (oldFile.isPresent()) {
       File newFile = oldFile.get();
-      Path path = Paths.get("./users/dni/" + newFile.getId().toString() + "." + newFile.getExtension());
+      Path path =
+          Paths.get("./users/dni/" + newFile.getId().toString() + "." + newFile.getExtension());
       fileDao.delete(newFile);
       Files.delete(path);
     }
-    return fileDao.save(new File(randomUIID,new Date(),dni.getOriginalFilename(),File.FileType.DNI,
-        extension,null,volunteer.get()));
+    return fileDao.save(
+        new File(randomUIID, new Date(), dni.getOriginalFilename(), File.FileType.DNI,
+            extension, null, volunteer.get()));
   }
 
   @Override
@@ -433,17 +473,18 @@ public class RepresentativeServiceImpl implements RepresentativeService{
       dir.mkdirs();
     }
     Optional<Volunteer> volunteer = volunteerDao.findById(volunteerId);
-    if(!volunteer.isPresent()){
-      throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
+    if (!volunteer.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.volunteer", volunteerId);
     }
     Optional<Representative> representative = representativeDao.findById(representativeId);
-    if(!representative.isPresent()){
-      throw new InstanceNotFoundException("project.entities.representative",representativeId);
+    if (!representative.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.representative", representativeId);
     }
     //if there is no permission volunteer does not exist
-    if(!(fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(), volunteer.get(),
-        File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH).isPresent())){
-      throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
+    if (!(fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(),
+        volunteer.get(),
+        File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH).isPresent())) {
+      throw new InstanceNotFoundException("project.entities.volunteer", volunteerId);
     }
     InputStream inputStream = photo.getInputStream();
     Tika tika = new Tika();
@@ -456,26 +497,30 @@ public class RepresentativeServiceImpl implements RepresentativeService{
       throw new IOException("File already exists: " + filePath);
     }
     Files.copy(photo.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-    Optional<File> oldFile = fileDao.findByVolunteerAndFileType(volunteer.get(), File.FileType.PHOTO);
+    Optional<File> oldFile =
+        fileDao.findByVolunteerAndFileType(volunteer.get(), File.FileType.PHOTO);
     if (oldFile.isPresent()) {
       File newFile = oldFile.get();
-      Path path = Paths.get("./users/photo/" + newFile.getId().toString() + "." + newFile.getExtension());
+      Path path =
+          Paths.get("./users/photo/" + newFile.getId().toString() + "." + newFile.getExtension());
       fileDao.delete(newFile);
       Files.delete(path);
     }
-    return fileDao.save(new File(randomUIID,new Date(),photo.getOriginalFilename(),File.FileType.PHOTO,
-        extension,null,volunteer.get()));
+    return fileDao.save(
+        new File(randomUIID, new Date(), photo.getOriginalFilename(), File.FileType.PHOTO,
+            extension, null, volunteer.get()));
   }
 
   @Override
   public Block<Volunteer> findMyEntityVolunteers(Long representativeId, PageableDto pageableDto)
       throws InstanceNotFoundException {
     Optional<Representative> representative = representativeDao.findById(representativeId);
-    if(!representative.isPresent()){
-      throw new InstanceNotFoundException("project.entities.representative",representativeId);
+    if (!representative.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.representative", representativeId);
     }
 
-    String[] allowedSortColumns = {"volunteerSurname", "volunteerName", "volunteerPhone", "volunteerDni"};
+    String[] allowedSortColumns =
+        {"volunteerSurname", "volunteerName", "volunteerPhone", "volunteerDni"};
 
     Pageable pageable = pageableDtoToPageable(pageableDto, allowedSortColumns);
 
@@ -491,27 +536,150 @@ public class RepresentativeServiceImpl implements RepresentativeService{
         volunteers.add(volunteer);
       }
     }
-    return new Block<>(volunteers,filePage.hasNext());
+    return new Block<>(volunteers, filePage.hasNext());
 
   }
 
-  private Pageable pageableDtoToPageable(PageableDto pageableDto, String[] allowedSortColumns){
+  @Override
+  public List<RegisteredHours> findAllHoursWithinDates(Long representativeId, Long projectId,
+                                                       LocalDate startDate,
+                                                       LocalDate endDate)
+      throws InstanceNotFoundException, PermissionException {
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    if (!representative.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.representative", representativeId);
+    }
+    if (projectId != null) {
+      Optional<Project> project = projectDao.findById(projectId);
+      if (!project.isPresent()) {
+        throw new InstanceNotFoundException("project.entities.project", projectId);
+      }
+      if (project.get().getEntity() != representative.get().getEntity()) {
+        throw new PermissionException();
+      }
+      return registeredHoursDao.findByParticipationProjectAndDateBetween(project.get(), startDate,
+          endDate);
+    } else {
+      return registeredHoursDao.findByParticipationProjectEntityAndDateBetween(representative.get()
+          .getEntity(), startDate, endDate);
+    }
+  }
+
+  @Override
+  public List<SelectorDataDto> findAllMyEntityProjects(Long representativeId)
+      throws InstanceNotFoundException {
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    if (!representative.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.representative", representativeId);
+    }
+    return projectDao.findAllByEntityId(representative.get().getEntity().getId(),
+        PageRequest.of(0, 6000)).getContent().stream().map(
+        project -> new SelectorDataDto(project.getId(), project.getName())).collect(
+        Collectors.toList());
+  }
+
+  @Override
+  public List<SelectorDataDto> findAllProjectParticipations(Long representativeId, Long projectId)
+      throws InstanceNotFoundException, PermissionException {
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    if (!representative.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.representative", representativeId);
+    }
+    Optional<Project> project = projectDao.findById(projectId);
+    if (!project.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.project", projectId);
+    }
+    if (project.get().getEntity() != representative.get().getEntity()) {
+      throw new PermissionException();
+    }
+    return participationDao.findAllByProjectIdAndState(projectId,
+            Participation.ParticipationState.ACCEPTED, PageRequest.of(0, 6000)).getContent().stream()
+        .map(participation ->
+            new SelectorDataDto(participation.getId(),
+                (participation.getVolunteer().getName() + " " +
+                    participation.getVolunteer().getSurname()))).collect(
+            Collectors.toList());
+  }
+
+  @Override
+  public RegisteredHours createHourRegister(Long representativeId,
+                                            RegisteredHoursDto registeredHoursDto)
+      throws InstanceNotFoundException, ParticipationIsInDateException {
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    if (!representative.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.representative", representativeId);
+    }
+    Optional<Participation> participation = participationDao.findById(
+        registeredHoursDto.getParticipationId());
+    if (!participation.isPresent() || (participation.get().getProject().getEntity() != representative.get().getEntity())) {
+      throw new InstanceNotFoundException("project.entities.participation",
+          registeredHoursDto.getParticipationId());
+    }
+    Optional<RegisteredHours> savedRegisteredHours =
+        registeredHoursDao.findByDateAndParticipation(registeredHoursDto.getDate(),
+            participation.get());
+
+    if (!savedRegisteredHours.isPresent()) {
+      RegisteredHours registeredHoursResult = registeredHoursDao.save(
+          new RegisteredHours(registeredHoursDto.getHours(), registeredHoursDto.getDate(),
+              participation.get()));
+      //update participation total hours for performance if only total hours are queried later
+      try {
+        participation.get()
+            .setTotalHours(participation.get().getTotalHours() + registeredHoursResult.getHours());
+      }
+      catch (OptimisticLockingFailureException ex) {
+        registeredHoursDao.delete(registeredHoursResult);
+        throw new InstanceNotFoundException("project.entities.participation",participation.get().getId());
+      }
+      return registeredHoursResult;
+    }
+    else {
+      //no allowing saving the same participation again in the same date
+      throw new ParticipationIsInDateException();
+    }
+
+  }
+
+  @Override
+  public boolean deleteHourRegister(Long representativeId, Long hourRegisterId)
+      throws InstanceNotFoundException {
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    if (!representative.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.representative", representativeId);
+    }
+    Optional<RegisteredHours> hours = registeredHoursDao.findById(
+        hourRegisterId);
+    if(!hours.isPresent()){
+      throw new InstanceNotFoundException("project.entities.registeredHours", hourRegisterId);
+    }
+    try {
+      hours.get().getParticipation()
+          .setTotalHours(hours.get().getParticipation().getTotalHours() - hours.get().getHours());
+    }
+    catch (OptimisticLockingFailureException ex) {
+      throw new InstanceNotFoundException("project.entities.registeredHours",hourRegisterId);
+    }
+    registeredHoursDao.delete(hours.get());
+    return true;
+  }
+
+  private Pageable pageableDtoToPageable(PageableDto pageableDto, String[] allowedSortColumns) {
     boolean isSorted = pageableDto.getSortValue() != null;
-    if (pageableDto.getSortValue() != null && !Arrays.asList(allowedSortColumns).contains(pageableDto.getSortValue())) {
+    if (pageableDto.getSortValue() != null &&
+        !Arrays.asList(allowedSortColumns).contains(pageableDto.getSortValue())) {
       throw new IllegalArgumentException("Invalid sort value");
     }
     Pageable pageable;
-    if(isSorted){
-      if(pageableDto.getSortOrder().equals("desc")){
+    if (isSorted) {
+      if (pageableDto.getSortOrder().equals("desc")) {
         pageable = PageRequest.of(pageableDto.getPage(), pageableDto.getSize(),
             Sort.by(Sort.Direction.DESC, pageableDto.getSortValue()));
-      }
-      else{
+      } else {
         pageable = PageRequest.of(pageableDto.getPage(), pageableDto.getSize(),
             Sort.by(Sort.Direction.ASC, pageableDto.getSortValue()));
       }
-    }
-    else{
+    } else {
       pageable = PageRequest.of(pageableDto.getPage(), pageableDto.getSize());
     }
     return pageable;
@@ -531,7 +699,8 @@ public class RepresentativeServiceImpl implements RepresentativeService{
         return new java.io.File("./entities/certs/" + file.getId() + "." + file.getExtension());
       case AGREEMENT_FILE_SIGNED_BY_ENTITY:
       case AGREEMENT_FILE_SIGNED_BY_BOTH:
-        return new java.io.File("./participations/certFiles/" + file.getId() + "." + file.getExtension());
+        return new java.io.File(
+            "./participations/certFiles/" + file.getId() + "." + file.getExtension());
       default:
         return null;
     }

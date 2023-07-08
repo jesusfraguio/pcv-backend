@@ -227,6 +227,13 @@ public class VolunteerServiceImpl implements VolunteerService {
       throw new IOException("File already exists: " + filePath);
     }
     Files.copy(multipartFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+    Optional<File> oldFile = fileDao.findByEntidadAndVolunteerAndFileType(participation.getProject().getEntity(), participation.getVolunteer(), File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH);
+    if (oldFile.isPresent()) {
+      File newFile = oldFile.get();
+      Path path = Paths.get("./participations/certFiles/" + newFile.getId().toString() + "." + newFile.getExtension());
+      fileDao.delete(newFile);
+      Files.delete(path);
+    }
     File saved = fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH,
         extension,participationOpt.get().getProject().getEntity(),participationOpt.get().getVolunteer()));
     if(participation.getState()== Participation.ParticipationState.APPROVED){

@@ -4,6 +4,7 @@ DROP CONSTRAINT IF EXISTS "FileEntityForeignKey";
 ALTER TABLE "File"
 DROP CONSTRAINT IF EXISTS "FileVolunteerForeignKey";
 
+DROP TABLE IF EXISTS "RegisteredHours";
 DROP TABLE IF EXISTS "Participation";
 DROP TABLE IF EXISTS "VolunteerRecord";
 DROP TABLE IF EXISTS "Representative";
@@ -145,6 +146,15 @@ CREATE TABLE "Participation" (
     "volunteerRecordId" BIGINT NOT NULL,
     CONSTRAINT "ParticipationProjectForeignKey" FOREIGN KEY("projectId") REFERENCES "Project" (id),
     CONSTRAINT "ParticipationVolunteerRecordForeignKey" FOREIGN KEY("volunteerRecordId") REFERENCES "VolunteerRecord" (id)
+);
+
+CREATE TABLE "RegisteredHours" (
+    "id" BIGSERIAL PRIMARY KEY,
+    "hours" INTEGER NOT NULL,
+    "date" DATE NOT NULL,
+    "participationId" BIGINT NOT NULL,
+    CONSTRAINT "RegisteredHoursParticipationForeignKey" FOREIGN KEY("participationId") REFERENCES "Participation" (id),
+    CONSTRAINT "RegisteredHoursUniqueDateAndParticipation" UNIQUE ("date","participationId")
 );
 
 ALTER TABLE "File" ADD CONSTRAINT "FileEntityForeignKey" FOREIGN KEY ("entityId") REFERENCES "Entity" ("id");

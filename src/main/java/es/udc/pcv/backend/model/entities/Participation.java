@@ -12,6 +12,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Version;
 
 @Entity
 @Table(name = "\"Participation\"")
@@ -36,6 +37,8 @@ public class Participation {
   }
 
   private Long id;
+
+  @Version
   private int totalHours;
   private ParticipationState state;
   private boolean isRecommended;
