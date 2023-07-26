@@ -62,4 +62,8 @@ public interface EntityConversor {
 
   List<CollaborationAreaDTO> toCollaborationAreaDTO(List<CollaborationArea> collaborationAreas);
 
+  SelectorDataDto toSelectorDataDto(Entidad entidad);
+
+  Block<SelectorDataDto> toSelectorDataDtoBlock(Block<Entidad> entityBlock);
+
 }

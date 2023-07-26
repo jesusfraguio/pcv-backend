@@ -26,13 +26,18 @@ import es.udc.pcv.backend.rest.dtos.UserDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
+import java.util.List;
+import javax.validation.constraints.NotEmpty;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -133,6 +138,12 @@ public class AdminController {
     entityDtoReturn.setCertName(certFile!=null ? certFile.getOriginalName() : null);
     return entityDtoReturn;
 
+  }
+
+  @Operation(summary = "updates a project with a new ods list")
+  @PatchMapping(value = "/update/project/{projectId}/ods")
+  public boolean updateProjectOds(@PathVariable Long projectId, @RequestBody @NotEmpty List<Long> ods){
+    return adminService.updateProjectOds(projectId,ods);
   }
 
 }

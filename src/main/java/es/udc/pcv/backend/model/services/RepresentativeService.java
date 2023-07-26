@@ -33,7 +33,7 @@ public interface RepresentativeService {
   ResourceWithType getAgreementFile(Long entityId) throws InstanceNotFoundException;
   ResourceWithType getVolunteerFile(Long representativeId, Long volunteerId, String fileType) throws InstanceNotFoundException;
   Project getProject(long projectId) throws InstanceNotFoundException;
-  Block<Project> getMyEntityProjects(Long userId, PageableDto pageableDto) throws InstanceNotFoundException;
+  Block<Project> getMyEntityProjects(Long userId, Long entityId, PageableDto pageableDto) throws InstanceNotFoundException;
   Block<Participation> findAllPendingParticipation(Long representativeId, PageableDto pageableDto) throws InstanceNotFoundException;
   Block<Participation> findAllProjectParticipation(Long representativeId, Long projectId, PageableDto pageableDto) throws InstanceNotFoundException;
   File updateVolunteerCertFile(Long userId, Long id, MultipartFile multipartFile)

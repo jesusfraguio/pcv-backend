@@ -270,14 +270,25 @@ public class RepresentativeServiceImpl implements RepresentativeService {
   }
 
   @Override
-  public Block<Project> getMyEntityProjects(Long representativeId, PageableDto pageableDto)
+  public Block<Project> getMyEntityProjects(Long representativeId, Long entityId, PageableDto pageableDto)
       throws InstanceNotFoundException {
+    //Currently, using this method to get any entity project's since project detail is public and yet only ProjectSummary is exposed
+    Long searchEntityId = entityId;
     Optional<Representative> representative = representativeDao.findById(representativeId);
     if (!representative.isPresent()) {
       throw new InstanceNotFoundException("project.entities.representative", representativeId);
     }
+    if(entityId!=null){
+      Optional<Entidad> entity = entidadDao.findById(entityId);
+      if(!entity.isPresent()){
+        searchEntityId = representative.get().getEntity().getId();
+      }
+    }
+    else{
+      searchEntityId = representative.get().getEntity().getId();
+    }
     Page<Project> projectPage =
-        projectDao.findAllByEntityId(representative.get().getEntity().getId(),
+        projectDao.findAllByEntityId(searchEntityId,
             PageRequest.of(pageableDto.getPage(), pageableDto.getSize()));
     return new Block<>(projectPage.getContent(), projectPage.hasNext());
   }
@@ -665,6 +676,10 @@ public class RepresentativeServiceImpl implements RepresentativeService {
   }
 
   private Pageable pageableDtoToPageable(PageableDto pageableDto, String[] allowedSortColumns) {
+    return getPageable(pageableDto, allowedSortColumns);
+  }
+
+  protected static Pageable getPageable(PageableDto pageableDto, String[] allowedSortColumns) {
     boolean isSorted = pageableDto.getSortValue() != null;
     if (pageableDto.getSortValue() != null &&
         !Arrays.asList(allowedSortColumns).contains(pageableDto.getSortValue())) {

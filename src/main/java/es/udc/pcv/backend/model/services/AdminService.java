@@ -13,4 +13,5 @@ public interface AdminService {
   Block<Entidad> getEntities(int page, int size);
   File updateEntityLogo(MultipartFile multipartFile, Long entityId) throws IOException;
   File updateEntityCert(MultipartFile multipartFile, Long entityId) throws IOException;
+  boolean updateProjectOds(Long projectId, List<Long> ods);
 }

@@ -1,5 +1,6 @@
 package es.udc.pcv.backend.model.entities;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -103,7 +104,7 @@ public class Entidad {
     this.phone = phone;
   }
 
-  @OneToOne(fetch = FetchType.LAZY,optional = true)
+  @OneToOne(fetch = FetchType.LAZY,optional = true, cascade = CascadeType.ALL)
   @JoinColumn(name = "\"certFileId\"")
   public File getCertFile() {
     return certFile;
@@ -113,7 +114,7 @@ public class Entidad {
     this.certFile = certFile;
   }
 
-  @OneToOne(fetch = FetchType.LAZY,optional = true)
+  @OneToOne(fetch = FetchType.EAGER,optional = true, cascade = CascadeType.ALL)
   @JoinColumn(name = "\"logoId\"")
   public File getLogo() {
     return logo;
