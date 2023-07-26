@@ -4,6 +4,11 @@ import es.udc.pcv.backend.model.entities.Entidad;
 import es.udc.pcv.backend.model.entities.EntidadDao;
 import es.udc.pcv.backend.model.entities.File;
 import es.udc.pcv.backend.model.entities.FileDao;
+import es.udc.pcv.backend.model.entities.Ods;
+import es.udc.pcv.backend.model.entities.OdsDao;
+import es.udc.pcv.backend.model.entities.Project;
+import es.udc.pcv.backend.model.entities.ProjectDao;
+import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.to.EntityData;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +19,10 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,6 +41,12 @@ public class AdminServiceImpl implements AdminService{
 
   @Autowired
   private FileDao fileDao;
+
+  @Autowired
+  private ProjectDao projectDao;
+
+  @Autowired
+  private OdsDao odsDao;
 
   @Override
   public Entidad createEntity(EntityData entity) {
@@ -95,5 +109,26 @@ public class AdminServiceImpl implements AdminService{
     Entidad entity = entityDao.findById(entityId).get();
     entity.setCertFile(saved);
     return saved;
+  }
+
+  @Override
+  public boolean updateProjectOds(Long projectId, List<Long> ods) {
+    if(ods.isEmpty()){
+      return false;
+    }
+    Optional<Project> project = projectDao.findById(projectId);
+    if(!project.isPresent()){
+      return false;
+    }
+    Set<Ods> odsList = ods.stream()
+        .map(odsId -> odsDao.findById(odsId))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .collect(Collectors.toSet());
+    if (odsList.isEmpty()) {
+      return false;
+    }
+    project.get().setOds(odsList);
+    return true;
   }
 }
