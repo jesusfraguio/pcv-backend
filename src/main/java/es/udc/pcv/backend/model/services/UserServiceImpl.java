@@ -78,6 +78,9 @@ public class UserServiceImpl implements UserService {
 	@Value("${spring.mail.username}")
 	private String originEmail;
 
+	@Value("${file.base-path}")
+	private String basePath;
+
 	private static final SecureRandom RANDOM = new SecureRandom();
 
 	@Override
@@ -262,7 +265,7 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public File updateDNI(Long userId, MultipartFile dni)
 			throws IOException, InstanceNotFoundException {
-		String uploadDir = "./users/dni/";
+		String uploadDir = basePath+"users/dni/";
 		java.io.File dir = new java.io.File(uploadDir);
 		if (!dir.exists()) {
 			dir.mkdirs();
@@ -287,7 +290,11 @@ public class UserServiceImpl implements UserService {
 			File newFile = oldFile.get();
 			Path path = Paths.get("./users/dni/" + newFile.getId().toString() + "." + newFile.getExtension());
 			fileDao.delete(newFile);
-			Files.delete(path);
+			try {
+				Files.delete(path);
+			}catch (IOException e){
+				//If there is no old file in disk because it was already deleted (low chances) app will keep going right
+			}
 		}
 		return fileDao.save(new File(randomUIID,new Date(),dni.getOriginalFilename(),File.FileType.DNI,
 				extension,null,volunteer.get()));
@@ -296,7 +303,7 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public File updateHarassmentCert(Long userId, MultipartFile harassmentCert)
 			throws InstanceNotFoundException, IOException {
-		String uploadDir = "./users/harassmentCert/";
+		String uploadDir = basePath+"users/harassmentCert/";
 		java.io.File dir = new java.io.File(uploadDir);
 		if (!dir.exists()) {
 			dir.mkdirs();
@@ -321,7 +328,11 @@ public class UserServiceImpl implements UserService {
 			File newFile = oldFile.get();
 			Path path = Paths.get("./users/harassmentCert/" + newFile.getId().toString() + "." + newFile.getExtension());
 			fileDao.delete(newFile);
-			Files.delete(path);
+			try {
+				Files.delete(path);
+			}catch (IOException e){
+				//If there is no old file in disk because it was already deleted (low chances) app will keep going right
+			}
 		}
 		return fileDao.save(new File(randomUIID,new Date(),harassmentCert.getOriginalFilename(),File.FileType.HARASSMENT_CERT,
 				extension,null,volunteer.get()));
@@ -338,7 +349,7 @@ public class UserServiceImpl implements UserService {
 		if(!volunteer.isPresent()){
 			throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
 		}
-		String uploadDir = "./participations/certFiles/";
+		String uploadDir = basePath+"participations/certFiles/";
 		java.io.File dir = new java.io.File(uploadDir);
 		if (!dir.exists()) {
 			dir.mkdirs();
@@ -359,7 +370,11 @@ public class UserServiceImpl implements UserService {
 			File newFile = oldFile.get();
 			Path path = Paths.get("./participations/certFiles/" + newFile.getId().toString() + "." + newFile.getExtension());
 			fileDao.delete(newFile);
-			Files.delete(path);
+			try {
+				Files.delete(path);
+			}catch (IOException e){
+				//If there is no old file in disk because it was already deleted (low chances) app will keep going right
+			}
 		}
 		return fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH,
 				extension,representative.get().getEntity(),volunteer.get()));

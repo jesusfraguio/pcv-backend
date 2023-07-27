@@ -48,6 +48,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -91,6 +92,9 @@ public class RepresentativeServiceImpl implements RepresentativeService {
 
   @Autowired
   private RegisteredHoursDao registeredHoursDao;
+
+  @Value("${file.base-path}")
+  private String basePath;
 
   @Override
   public Project createProject(ProjectDto projectDto, long userId)
@@ -344,7 +348,7 @@ public class RepresentativeServiceImpl implements RepresentativeService {
         participationOpt.get().getProject().getEntity().getId())) {
       throw new PermissionException();
     }
-    String uploadDir = "./participations/certFiles/";
+    String uploadDir = basePath+"participations/certFiles/";
     java.io.File dir = new java.io.File(uploadDir);
     if (!dir.exists()) {
       dir.mkdirs();
@@ -368,7 +372,11 @@ public class RepresentativeServiceImpl implements RepresentativeService {
       Path path = Paths.get("./participations/certFiles/" + newFile.getId().toString() + "." +
           newFile.getExtension());
       fileDao.delete(newFile);
-      Files.delete(path);
+      try {
+        Files.delete(path);
+      }catch (IOException e){
+        //If there is no old file in disk because it was already deleted (low chances) app will keep going right
+      }
     }
     File saved = fileDao.save(new File(randomUIID, new Date(), multipartFile.getOriginalFilename(),
         File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH,
@@ -384,7 +392,7 @@ public class RepresentativeServiceImpl implements RepresentativeService {
   public File updateVolunteerHarassmentCert(Long representativeId, Long volunteerId,
                                             MultipartFile multipartFile)
       throws InstanceNotFoundException, IOException {
-    String uploadDir = "./users/harassmentCert/";
+    String uploadDir = basePath+"users/harassmentCert/";
     java.io.File dir = new java.io.File(uploadDir);
     if (!dir.exists()) {
       if (!dir.mkdirs()) {
@@ -422,7 +430,11 @@ public class RepresentativeServiceImpl implements RepresentativeService {
       Path path = Paths.get(
           "./users/harassmentCert/" + newFile.getId().toString() + "." + newFile.getExtension());
       fileDao.delete(newFile);
-      Files.delete(path);
+      try {
+        Files.delete(path);
+      }catch (IOException e){
+        //If there is no old file in disk because it was already deleted (low chances) app will keep going right
+      }
     }
     return fileDao.save(new File(randomUIID, new Date(), multipartFile.getOriginalFilename(),
         File.FileType.HARASSMENT_CERT,
@@ -432,7 +444,7 @@ public class RepresentativeServiceImpl implements RepresentativeService {
   @Override
   public File updateVolunteerDNI(Long representativeId, Long volunteerId,
                                  MultipartFile dni) throws InstanceNotFoundException, IOException {
-    String uploadDir = "./users/dni/";
+    String uploadDir = basePath+"users/dni/";
     java.io.File dir = new java.io.File(uploadDir);
     if (!dir.exists()) {
       dir.mkdirs();
@@ -468,7 +480,11 @@ public class RepresentativeServiceImpl implements RepresentativeService {
       Path path =
           Paths.get("./users/dni/" + newFile.getId().toString() + "." + newFile.getExtension());
       fileDao.delete(newFile);
-      Files.delete(path);
+      try {
+        Files.delete(path);
+      }catch (IOException e){
+        //If there is no old file in disk because it was already deleted (low chances) app will keep going right
+      }
     }
     return fileDao.save(
         new File(randomUIID, new Date(), dni.getOriginalFilename(), File.FileType.DNI,
@@ -478,7 +494,7 @@ public class RepresentativeServiceImpl implements RepresentativeService {
   @Override
   public File uploadVolunteerPhoto(Long representativeId, Long volunteerId, MultipartFile photo)
       throws InstanceNotFoundException, IOException {
-    String uploadDir = "./users/photo/";
+    String uploadDir = basePath+"users/photo/";
     java.io.File dir = new java.io.File(uploadDir);
     if (!dir.exists()) {
       dir.mkdirs();
@@ -515,7 +531,11 @@ public class RepresentativeServiceImpl implements RepresentativeService {
       Path path =
           Paths.get("./users/photo/" + newFile.getId().toString() + "." + newFile.getExtension());
       fileDao.delete(newFile);
-      Files.delete(path);
+      try {
+        Files.delete(path);
+      }catch (IOException e){
+        //If there is no old file in disk because it was already deleted (low chances) app will keep going right
+      }
     }
     return fileDao.save(
         new File(randomUIID, new Date(), photo.getOriginalFilename(), File.FileType.PHOTO,

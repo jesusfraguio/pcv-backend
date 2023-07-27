@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -48,6 +49,9 @@ public class AdminServiceImpl implements AdminService{
   @Autowired
   private OdsDao odsDao;
 
+  @Value("${file.base-path}")
+  private String baseDir;
+
   @Override
   public Entidad createEntity(EntityData entity) {
     Entidad entidad = new Entidad(entity.getName(), entity.getShortDescription(), entity.getUrl(),
@@ -65,7 +69,7 @@ public class AdminServiceImpl implements AdminService{
   @Override
   public File updateEntityLogo(MultipartFile multipartFile, Long entityId) throws IOException {
 
-    String uploadDir = "./entities/logos/";
+    String uploadDir = baseDir+"entities/logos/";
     java.io.File dir = new java.io.File(uploadDir);
     if (!dir.exists()) {
       dir.mkdirs();
@@ -89,7 +93,7 @@ public class AdminServiceImpl implements AdminService{
 
   @Override
   public File updateEntityCert(MultipartFile multipartFile, Long entityId) throws IOException{
-    String uploadDir = "./entities/certs/";
+    String uploadDir = baseDir+"entities/certs/";
     java.io.File dir = new java.io.File(uploadDir);
     if (!dir.exists()) {
       dir.mkdirs();

@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -51,6 +52,9 @@ public class VolunteerServiceImpl implements VolunteerService {
   private RepresentativeDao representativeDao;
   @Autowired
   private FileDao fileDao;
+
+  @Value("${file.base-path}")
+  private String basePath;
 
   @Override
   public Participation createMyParticipation(ParticipationDto participationData, Long userId) throws
@@ -211,7 +215,7 @@ public class VolunteerServiceImpl implements VolunteerService {
       throw new InvalidStatusTransitionException(Participation.ParticipationState.APPROVED.getValue(),
           Participation.ParticipationState.ACCEPTED.getValue(), File.FileType.DNI.toString());
     }
-    String uploadDir = "./participations/certFiles/";
+    String uploadDir = basePath+"participations/certFiles/";
     java.io.File dir = new java.io.File(uploadDir);
     if (!dir.exists()) {
       dir.mkdirs();
@@ -232,7 +236,11 @@ public class VolunteerServiceImpl implements VolunteerService {
       File newFile = oldFile.get();
       Path path = Paths.get("./participations/certFiles/" + newFile.getId().toString() + "." + newFile.getExtension());
       fileDao.delete(newFile);
-      Files.delete(path);
+      try {
+        Files.delete(path);
+      }catch (IOException e){
+        //If there is no old file in disk because it was already deleted (low chances) app will keep going right
+      }
     }
     File saved = fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH,
         extension,participationOpt.get().getProject().getEntity(),participationOpt.get().getVolunteer()));

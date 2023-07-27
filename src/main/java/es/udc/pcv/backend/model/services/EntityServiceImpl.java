@@ -6,8 +6,6 @@ import es.udc.pcv.backend.model.entities.Entidad;
 import es.udc.pcv.backend.model.entities.EntidadDao;
 import es.udc.pcv.backend.model.entities.File;
 import es.udc.pcv.backend.model.entities.FileDao;
-import es.udc.pcv.backend.model.entities.Project;
-import es.udc.pcv.backend.model.entities.ProjectSpecifications;
 import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.entities.RepresentativeDao;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
@@ -28,6 +26,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -49,6 +48,9 @@ public class EntityServiceImpl implements EntityService {
   @Autowired
   private FileDao fileDao;
 
+  @Value("${file.base-path}")
+  private String basePath;
+
   @Override
   public Entidad getEntity(Long entityId) throws InstanceNotFoundException {
     return entityDao.findById(entityId).orElseThrow(() -> new InstanceNotFoundException("project.entities.entity",entityId));
@@ -57,7 +59,7 @@ public class EntityServiceImpl implements EntityService {
   @Override
   public File updateMyEntityCertFile(Long representativeId, Long entityId, MultipartFile multipartFile)
       throws PermissionException, IOException, InstanceNotFoundException {
-    String uploadDir = "./entities/certs/";
+    String uploadDir = basePath+"entities/certs/";
     java.io.File dir = new java.io.File(uploadDir);
     if (!dir.exists()) {
       dir.mkdirs();
@@ -79,7 +81,11 @@ public class EntityServiceImpl implements EntityService {
       Path path = Paths.get(
           uploadDir + oldFile.getId().toString() + "." + oldFile.getExtension());
       fileDao.delete(oldFile);
-      Files.delete(path);
+      try {
+        Files.delete(path);
+      }catch (IOException e){
+        //If there is no old file in disk because it was already deleted (low chances) app will keep going right
+      }
     }
     File saved = fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),
         File.FileType.AGREEMENT_FILE,extension));
@@ -90,7 +96,7 @@ public class EntityServiceImpl implements EntityService {
   @Override
   public File updateMyEntityLogo(Long representativeId, Long entityId, MultipartFile multipartFile)
       throws PermissionException, IOException, InstanceNotFoundException {
-    String uploadDir = "./entities/logos/";
+    String uploadDir = basePath+"entities/logos/";
     java.io.File dir = new java.io.File(uploadDir);
     if (!dir.exists()) {
       dir.mkdirs();
@@ -112,7 +118,11 @@ public class EntityServiceImpl implements EntityService {
       Path path = Paths.get(
           uploadDir + oldFile.getId().toString() + "." + oldFile.getExtension());
       fileDao.delete(oldFile);
-      Files.delete(path);
+      try {
+        Files.delete(path);
+      }catch (IOException e){
+        //If there is no old file in disk because it was already deleted (low chances) app will keep going right
+      }
     }
     File saved = fileDao.save(new File(randomUIID,new Date(),multipartFile.getOriginalFilename(),
         File.FileType.LOGO,extension));

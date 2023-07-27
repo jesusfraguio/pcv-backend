@@ -43,5 +43,8 @@ project:
   jwt:
     signKey: '@jwt.signKey@'
     expirationMinutes: 1440
+file:
+  base-path: "./"
+
 server:
   port: 8080
