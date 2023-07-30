@@ -60,3 +60,4 @@ INSERT INTO "CollaborationArea" (name) VALUES ('Migración y refugio');
 INSERT INTO "CollaborationArea" (name) VALUES ('Infancia y juventud');
 INSERT INTO "CollaborationArea" (name) VALUES ('Apoyo a personas mayores');
 INSERT INTO "CollaborationArea" (name) VALUES ('Apoyo a personas con discapacidad');
+INSERT INTO "CollaborationArea" (name) VALUES ('Apoyo en tareas administrativas');
