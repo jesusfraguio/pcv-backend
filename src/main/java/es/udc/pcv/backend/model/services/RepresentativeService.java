@@ -13,6 +13,7 @@ import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.exceptions.ParticipationIsInDateException;
 import es.udc.pcv.backend.model.exceptions.PermissionException;
 import es.udc.pcv.backend.model.to.ResourceWithType;
+import es.udc.pcv.backend.rest.dtos.HourVolunteerDto;
 import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.ProjectDto;
 import es.udc.pcv.backend.rest.dtos.ProjectFiltersDto;
@@ -55,5 +56,7 @@ public interface RepresentativeService {
   RegisteredHours createHourRegister(Long representativeId, RegisteredHoursDto registeredHoursDto)
       throws InstanceNotFoundException, ParticipationIsInDateException;
   boolean deleteHourRegister(Long representativeId, Long hourRegisterId)
+      throws InstanceNotFoundException;
+  List<HourVolunteerDto> getTotalHours(Long representativeId, Integer year, Long projectId, List<Long> volunteerId)
       throws InstanceNotFoundException;
 }

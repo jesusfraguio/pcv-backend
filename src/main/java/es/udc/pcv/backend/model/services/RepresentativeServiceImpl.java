@@ -25,6 +25,7 @@ import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.exceptions.ParticipationIsInDateException;
 import es.udc.pcv.backend.model.exceptions.PermissionException;
 import es.udc.pcv.backend.model.to.ResourceWithType;
+import es.udc.pcv.backend.rest.dtos.HourVolunteerDto;
 import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.ProjectDto;
 import es.udc.pcv.backend.rest.dtos.ProjectFiltersDto;
@@ -684,6 +685,12 @@ public class RepresentativeServiceImpl implements RepresentativeService {
     if(!hours.isPresent()){
       throw new InstanceNotFoundException("project.entities.registeredHours", hourRegisterId);
     }
+    Optional<Participation> participation = participationDao.findById(
+        hours.get().getParticipation().getId());
+    if (!participation.isPresent() || (participation.get().getProject().getEntity() != representative.get().getEntity())) {
+      throw new InstanceNotFoundException("project.entities.participation",
+          hours.get().getParticipation().getId());
+    }
     try {
       hours.get().getParticipation()
           .setTotalHours(hours.get().getParticipation().getTotalHours() - hours.get().getHours());
@@ -693,6 +700,29 @@ public class RepresentativeServiceImpl implements RepresentativeService {
     }
     registeredHoursDao.delete(hours.get());
     return true;
+  }
+
+  @Override
+  public List<HourVolunteerDto> getTotalHours(Long representativeId, Integer year, Long projectId,
+                                              List<Long> volunteerIds)
+      throws InstanceNotFoundException {
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    if (!representative.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.representative", representativeId);
+    }
+    List<HourVolunteerDto> returnList = new ArrayList<>();
+    if(projectId!=null){
+      for (Long volunteerId : volunteerIds) {
+        Optional<Participation> participation = participationDao.findByProjectIdAndVolunteerId(projectId,volunteerId);
+        if(!participation.isPresent() || (participation.get().getProject().getEntity() != representative.get().getEntity())) {
+          throw new InstanceNotFoundException("project.entities.volunteer",
+              volunteerId);
+        }
+        returnList.add(new HourVolunteerDto(volunteerId,registeredHoursDao.sumRegisteredHoursByParticipationAndDateBetween(participation.get(),
+            LocalDate.of(year,1,1),LocalDate.of(year,12,31))));
+      }
+    }
+    return returnList;
   }
 
   private Pageable pageableDtoToPageable(PageableDto pageableDto, String[] allowedSortColumns) {

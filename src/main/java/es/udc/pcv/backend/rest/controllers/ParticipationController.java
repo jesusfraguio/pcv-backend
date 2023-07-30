@@ -1,9 +1,7 @@
 package es.udc.pcv.backend.rest.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import es.udc.pcv.backend.model.entities.Entidad;
 import es.udc.pcv.backend.model.entities.File;
-import es.udc.pcv.backend.model.entities.RegisteredHours;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.exceptions.InvalidStatusTransitionException;
 import es.udc.pcv.backend.model.exceptions.ParticipationIsInDateException;
@@ -11,22 +9,21 @@ import es.udc.pcv.backend.model.exceptions.PermissionException;
 import es.udc.pcv.backend.model.services.Block;
 import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.services.VolunteerService;
-import es.udc.pcv.backend.model.to.EntityData;
-import es.udc.pcv.backend.rest.dtos.EntityDto;
+import es.udc.pcv.backend.rest.dtos.HourVolunteerDto;
 import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationConversor;
-import es.udc.pcv.backend.rest.dtos.ParticipationDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationStatusDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationSummaryDto;
 import es.udc.pcv.backend.rest.dtos.ParticipationWithUserDto;
 import es.udc.pcv.backend.rest.dtos.RegisteredHoursDto;
 import es.udc.pcv.backend.rest.dtos.SelectorDataDto;
-import es.udc.pcv.backend.rest.dtos.VolunteerSummaryDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
@@ -173,5 +170,14 @@ public class ParticipationController {
   public boolean deleteHourRegister(@RequestAttribute Long userId, @PathVariable Long hourRegisterId)
       throws InstanceNotFoundException {
     return representativeService.deleteHourRegister(userId,hourRegisterId);
+  }
+
+  @Operation(summary = "Gets total hours each volunteer has done in a project of a certain year(1st January - 31th December)")
+  @PostMapping(value="/totalHours/{year}")
+  public List<HourVolunteerDto> getTotalHours(@RequestAttribute Long userId, @PathVariable Integer year,
+                                              @RequestParam(required = true) Long projectId,
+                                              @Validated @RequestBody @NotNull @Size(max=20) List<Long> volunteerList)
+      throws InstanceNotFoundException {
+    return representativeService.getTotalHours(userId,year,projectId,volunteerList);
   }
 }

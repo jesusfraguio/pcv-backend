@@ -8,10 +8,12 @@ import es.udc.pcv.backend.model.entities.Participation;
 import es.udc.pcv.backend.model.entities.ParticipationDao;
 import es.udc.pcv.backend.model.entities.Representative;
 import es.udc.pcv.backend.model.entities.RepresentativeDao;
+import es.udc.pcv.backend.model.exceptions.PermissionException;
 import es.udc.pcv.backend.model.to.UserWithRepresentative;
 import es.udc.pcv.backend.model.to.UserWithVolunteer;
 import es.udc.pcv.backend.model.entities.Volunteer;
 import es.udc.pcv.backend.model.entities.VolunteerDao;
+import es.udc.pcv.backend.rest.dtos.UserDto;
 import es.udc.pcv.backend.rest.dtos.VolunteerEntityFilesDto;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -22,6 +24,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.SecureRandom;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 
 import es.udc.pcv.backend.model.exceptions.IncorrectLoginException;
@@ -114,7 +117,7 @@ public class UserServiceImpl implements UserService {
 		//For privacy reasons if volunteer is already in the system this entity won't know and it will show like he has been registered, updating new data
 		// because recent data must be accurate
 		else{
-			updateEntity(volunteer,emptyVolunteer.get());
+			updateVolunteer(volunteer,emptyVolunteer.get());
 			updateAgreementFile(representativeId,emptyVolunteer.get().getId(),cert);
 			return emptyVolunteer.get();
 		}
@@ -145,20 +148,87 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public UserWithVolunteer updateProfile(Long id, String name, String surname, String email) throws InstanceNotFoundException {
+	public UserDto updateProfile(Long id, String name, String surname, String email, String phone) throws InstanceNotFoundException {
 		
 		User user = permissionChecker.checkUser(id);
 		user.setEmail(email);
-
-		Optional<Volunteer> volunteerOpt = volunteerDao.findByUserId(user.getId());
-		Volunteer volunteer = null;
-		if(volunteerOpt.isPresent()){
-			volunteer = volunteerOpt.get();
-			volunteer.setName(name);
-			volunteer.setSurname(surname);
-
+		if(user.getRole()== User.RoleType.USER){
+			Optional<Volunteer> volunteerOpt = volunteerDao.findByUserId(user.getId());
+			Volunteer volunteer = null;
+			if(volunteerOpt.isPresent()){
+				volunteer = volunteerOpt.get();
+				volunteer.setName(name);
+				volunteer.setSurname(surname);
+				volunteer.setPhone(phone);
+			}
+			UserDto newUserDto = new UserDto();
+			newUserDto.setId(user.getId());
+			newUserDto.setRole(user.getRole().toString());
+			newUserDto.setEmail(user.getEmail());
+			newUserDto.setName(volunteer.getName());
+			newUserDto.setSurname(volunteer.getSurname());
+			newUserDto.setPhone(volunteer.getPhone());
+			return newUserDto;
 		}
-		return new UserWithVolunteer(user,volunteer);
+		else{
+			Optional<Representative> representativeOpt = representativeDao.findById(user.getId());
+			Representative representative = null;
+			if(representativeOpt.isPresent()){
+				representative = representativeOpt.get();
+				representative.setName(name);
+				representative.setSurname(surname);
+				representative.setPhone(phone);
+			}
+			UserDto newUserDto = new UserDto();
+			newUserDto.setId(user.getId());
+			newUserDto.setRole(user.getRole().toString());
+			newUserDto.setEmail(user.getEmail());
+			newUserDto.setName(representative.getName());
+			newUserDto.setSurname(representative.getSurname());
+			newUserDto.setPhone(representative.getPhone());
+			return newUserDto;
+		}
+	}
+
+	@Override
+	public UserWithVolunteer updateVolunteerProfile(Long representativeId, Long volunteerId,
+													UserDto newUserData)
+			throws PermissionException, InstanceNotFoundException, DuplicateInstanceException {
+		if(!Objects.equals(volunteerId, newUserData.getId())){
+			throw new PermissionException();
+		}
+		Optional<Representative> representative = representativeDao.findById(representativeId);
+		if(!representative.isPresent()){
+			throw new InstanceNotFoundException("project.entities.representative",representativeId);
+		}
+		Optional<Volunteer> volunteer = volunteerDao.findById(volunteerId);
+		if(!volunteer.isPresent()){
+			throw new InstanceNotFoundException("project.entities.volunteer",volunteerId);
+		}
+		if(!fileDao.existsByVolunteerAndFileTypeAndEntidad(volunteer.get(),
+				File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH, representative.get().getEntity())){
+			throw new PermissionException();
+		}
+		if (newUserData.getEmail()!=null && userDao.existsByEmail(newUserData.getEmail())) {
+			throw new DuplicateInstanceException("project.entities.user", newUserData.getEmail());
+		}
+		if(volunteer.get().getUser()==null && newUserData.getEmail()!=null){
+			User user = new User();
+			user.setPassword(passwordEncoder.encode(newUserData.getPassword()!=null ? newUserData.getPassword() : generateRandomPassword()));
+			user.setEmail(newUserData.getEmail());
+			user.setRole(User.RoleType.USER);
+			User created = userDao.save(user);
+			volunteer.get().setUser(created);
+			//TODO log representativeId with timestamp and volunteerId when email is modified for security reasons
+		} // user is not null
+		else if(newUserData.getEmail()!=null){
+			volunteer.get().getUser().setEmail(newUserData.getEmail());
+		}
+		volunteer = volunteerDao.findById(volunteerId);
+		Volunteer newVolunteer =  new Volunteer(newUserData.getName(), newUserData.getSurname(), newUserData.getDni(), newUserData.getDniExpiration(),newUserData.getLocality(),
+				newUserData.getPhone(), newUserData.getBirth());
+		Volunteer alreadyUpdated = updateVolunteer(newVolunteer,volunteer.get()); //no need check
+		return new UserWithVolunteer(alreadyUpdated.getUser(),alreadyUpdated);
 
 	}
 
@@ -187,12 +257,7 @@ public class UserServiceImpl implements UserService {
 		if (!entityDao.existsById(userWithRepresentative.getEntityId())){
 			throw new InstanceNotFoundException("project.entities.entidad",userWithRepresentative.getEntityId());
 		}
-		StringBuilder sb = new StringBuilder(10);
-		for (int i = 0; i < 10; i++) {
-			char randomChar = (char) (RANDOM.nextInt(95) + 32); //contraseña con caracteres printeables ASCII 32-126
-			sb.append(randomChar);
-		}
-		String randomPassword = sb.toString();
+		String randomPassword = generateRandomPassword();
 		User user = new User(randomPassword,userWithRepresentative.getEmail());
 		user.setPassword(passwordEncoder.encode(user.getPassword()));
 		user.setRole(User.RoleType.REPRESENTATIVE);
@@ -208,13 +273,18 @@ public class UserServiceImpl implements UserService {
 		SimpleMailMessage message = new SimpleMailMessage();
 		message.setFrom(originEmail);
 		String fullPath = "https://pcv-front.onrender.com/users/validate/registerToken/"+token;
-		String bodyMessage = "Para darse de alta en PlataformaCoruñesaDeVoluntariado introduzca una nueva contraseña en el siguiente enlace\n"+
+		String bodyMessage = "Para darse de alta en Plataforma Coruñesa De Voluntariado introduzca una nueva contraseña en el siguiente enlace.\n"+
 				"Este enlace tendrá una validez de 1 hora.\n"+fullPath+"\n" +
-				"Si ha recibido por error este mensaje ignorélo por favor";
+				"Si ha recibido por error este mensaje ignórelo por favor";
 		message.setTo(user.getEmail());
 		message.setSubject("Registro en Plataforma Coruñesa de Voluntariado");
 		message.setText(bodyMessage);
 		javaMailSender.send(message);
+	}
+
+	@Override
+	public Optional<User> findByEmail(String email) {
+		return userDao.findByEmail(email);
 	}
 
 	@Override
@@ -240,6 +310,26 @@ public class UserServiceImpl implements UserService {
 		User user = volunteer.get().getUser();
 		return new UserWithVolunteer(user,volunteer.get());
 	}
+
+	@Override
+	public UserWithVolunteer getMySummaryProfile(Long userId) throws InstanceNotFoundException {
+		Optional<Volunteer> volunteer = volunteerDao.findByUserId(userId);
+		if(!volunteer.isPresent()){
+			throw new InstanceNotFoundException("project.entities.volunteer",userId);
+		}
+		//for performance on login not getting user data since it was already fetched in controller
+		return new UserWithVolunteer(null,volunteer.get());
+	}
+
+	@Override
+	public Representative getMySummaryProfileRep(Long userId) throws InstanceNotFoundException {
+		Optional<Representative> representative = representativeDao.findById(userId);
+		if(!representative.isPresent()){
+			throw new InstanceNotFoundException("project.entities.representative",userId);
+		}
+		return representative.get();
+	}
+
 
 	@Override
 	public VolunteerEntityFilesDto findVolunteerEntityFiles(Long representativeId, Long userId)
@@ -382,7 +472,7 @@ public class UserServiceImpl implements UserService {
 
 	}
 
-	private void updateEntity(Volunteer updatedVolunteer, Volunteer existingEntity) {
+	private Volunteer updateVolunteer(Volunteer updatedVolunteer, Volunteer existingEntity) {
 		if (existingEntity != null && updatedVolunteer != null) {
 			if (updatedVolunteer.getName() != null) {
 				existingEntity.setName(updatedVolunteer.getName());
@@ -406,6 +496,16 @@ public class UserServiceImpl implements UserService {
 				existingEntity.setBirth(updatedVolunteer.getBirth());
 			}
 		}
+		return existingEntity;
+	}
+
+	private String generateRandomPassword(){
+		StringBuilder sb = new StringBuilder(10);
+		for (int i = 0; i < 10; i++) {
+			char randomChar = (char) (RANDOM.nextInt(95) + 32); //contraseña con caracteres printeables ASCII 32-126
+			sb.append(randomChar);
+		}
+		return sb.toString();
 	}
 
 }

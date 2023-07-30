@@ -1,23 +1,38 @@
 package es.udc.pcv.backend.rest.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import es.udc.pcv.backend.model.entities.Representative;
+import es.udc.pcv.backend.model.entities.User;
+import es.udc.pcv.backend.model.entities.Volunteer;
+import es.udc.pcv.backend.model.exceptions.DuplicateInstanceException;
+import es.udc.pcv.backend.model.exceptions.IncorrectLoginException;
+import es.udc.pcv.backend.model.exceptions.IncorrectPasswordException;
+import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
+import es.udc.pcv.backend.model.exceptions.PermissionException;
 import es.udc.pcv.backend.model.services.Block;
 import es.udc.pcv.backend.model.services.RepresentativeService;
+import es.udc.pcv.backend.model.services.UserService;
 import es.udc.pcv.backend.model.to.ResourceWithType;
 import es.udc.pcv.backend.model.to.UserWithVolunteer;
-import es.udc.pcv.backend.model.entities.Volunteer;
+import es.udc.pcv.backend.rest.common.ErrorsDto;
+import es.udc.pcv.backend.rest.common.JwtGenerator;
+import es.udc.pcv.backend.rest.common.JwtInfo;
+import es.udc.pcv.backend.rest.dtos.AuthenticatedUserDto;
+import es.udc.pcv.backend.rest.dtos.ChangePasswordParamsDto;
+import es.udc.pcv.backend.rest.dtos.EmailDto;
+import es.udc.pcv.backend.rest.dtos.LoginParamsDto;
 import es.udc.pcv.backend.rest.dtos.NewPasswordParamsDto;
 import es.udc.pcv.backend.rest.dtos.PageableDto;
 import es.udc.pcv.backend.rest.dtos.UserConversor;
+import es.udc.pcv.backend.rest.dtos.UserDto;
 import es.udc.pcv.backend.rest.dtos.VolunteerDataDto;
 import es.udc.pcv.backend.rest.dtos.VolunteerEntityFilesDto;
 import es.udc.pcv.backend.rest.dtos.VolunteerSummaryDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Locale;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.Resource;
@@ -42,21 +57,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import es.udc.pcv.backend.model.exceptions.DuplicateInstanceException;
-import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
-import es.udc.pcv.backend.model.entities.User;
-import es.udc.pcv.backend.model.exceptions.IncorrectLoginException;
-import es.udc.pcv.backend.model.exceptions.IncorrectPasswordException;
-import es.udc.pcv.backend.model.exceptions.PermissionException;
-import es.udc.pcv.backend.model.services.UserService;
-import es.udc.pcv.backend.rest.common.ErrorsDto;
-import es.udc.pcv.backend.rest.common.JwtGenerator;
-import es.udc.pcv.backend.rest.common.JwtInfo;
-import es.udc.pcv.backend.rest.dtos.AuthenticatedUserDto;
-import es.udc.pcv.backend.rest.dtos.ChangePasswordParamsDto;
-import es.udc.pcv.backend.rest.dtos.LoginParamsDto;
-import es.udc.pcv.backend.rest.dtos.UserDto;
 
 @RestController
 @RequestMapping("/users")
@@ -205,11 +205,17 @@ public class UserController {
 	@Operation(summary = "login")
 	@PostMapping("/login")
 	public AuthenticatedUserDto login(@Validated @RequestBody LoginParamsDto params)
-		throws IncorrectLoginException {
+			throws IncorrectLoginException, InstanceNotFoundException {
 		
 		User user = userService.login(params.getUserName(), params.getPassword());
-			
-		return userConversor.toAuthenticatedUserDto(generateServiceToken(user), user);
+		if(user.getRole()== User.RoleType.USER){
+			UserWithVolunteer profile = userService.getMySummaryProfile(user.getId());
+			return userConversor.toAuthenticatedUserDto(generateServiceToken(user), user, profile.getVolunteer());
+		}
+		else{
+			Representative representative = userService.getMySummaryProfileRep(user.getId());
+			return userConversor.toAuthenticatedUserDto(generateServiceToken(user), user, representative);
+		}
 		
 	}
 	
@@ -218,8 +224,14 @@ public class UserController {
 		@RequestAttribute String serviceToken) throws InstanceNotFoundException {
 		
 		User user = userService.loginFromId(userId);
-		
-		return userConversor.toAuthenticatedUserDto(serviceToken, user);
+		if(user.getRole()== User.RoleType.USER){
+			UserWithVolunteer profile = userService.getMySummaryProfile(user.getId());
+			return userConversor.toAuthenticatedUserDto(generateServiceToken(user), user, profile.getVolunteer());
+		}
+		else{
+			Representative representative = userService.getMySummaryProfileRep(user.getId());
+			return userConversor.toAuthenticatedUserDto(serviceToken, user, representative);
+		}
 		
 	}
 
@@ -231,10 +243,19 @@ public class UserController {
 		if (!id.equals(userId)) {
 			throw new PermissionException();
 		}
-		UserWithVolunteer userWithVolunteer = userService.updateProfile(id, userDto.getName(), userDto.getSurname(),
-				userDto.getEmail());
-		return userConversor.toUserDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer());
+		return userService.updateProfile(id, userDto.getName(), userDto.getSurname(),
+				userDto.getEmail(), userDto.getPhone());
 		
+	}
+	@Operation(summary = "updates volunteer's data that are collaborating with my entity")
+	@PutMapping("/myVolunteer/{id}")
+	public UserDto updateVolunteerProfile(@RequestAttribute Long userId, @PathVariable Long id,
+								 @Validated({UserDto.UpdateValidations.class}) @RequestBody UserDto userDto)
+			throws InstanceNotFoundException, PermissionException, DuplicateInstanceException {
+
+		UserWithVolunteer userWithVolunteer = userService.updateVolunteerProfile(userId, id, userDto);
+		return userConversor.toUserDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer());
+
 	}
 	@Operation(summary = "Update my certificate file (user)")
 	@RequestMapping(value = "/update-my-doc/{id}", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -263,6 +284,13 @@ public class UserController {
 		VolunteerEntityFilesDto hasFiles = userService.findVolunteerEntityFiles(userId, id);
 		return userConversor.toUserSummaryDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer(), hasFiles.isHasHarassmentFile(),
 				hasFiles.isHasCertFile(), hasFiles.isHasDniFile(), hasFiles.isHasPhoto());
+	}
+
+	@Operation(summary = "gets full volunteer's data susceptible of being modified")
+	@GetMapping("/myVolunteer/{id}")
+	public UserDto getUserFullProfile(@RequestAttribute Long userId, @PathVariable Long id) throws InstanceNotFoundException{
+		UserWithVolunteer userWithVolunteer = userService.getSummaryProfile(userId,id);
+		return userConversor.toUserFullDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer());
 	}
 
 	@Operation(summary = "Get a block of entity's volunteers")
@@ -299,6 +327,20 @@ public class UserController {
 
 		return userConversor.toAuthenticatedUserDto(generateServiceToken(user), user);
 
+	}
+	@Operation(summary = "sends e-mail with recovery token if it is registered")
+	@PostMapping("/sendRecoveryEmail")
+	public boolean sendRecoverEmail(
+			@RequestBody @Validated EmailDto emailDto) {
+
+		return userService.findByEmail(emailDto.getEmail())
+				.map(user -> {
+					String token = generateServiceToken(user);
+					userService.sendEmailWithToken(user, token);
+					return true;
+				})
+				.orElse(true); // for security measures to don't leak if an email is registered, true is returned as well
+	//TODO If you want that the most advanced hacker don't know if an account exists an async thread should be opened because of time sending email requires
 	}
 
 	private String generateServiceToken(User user) {

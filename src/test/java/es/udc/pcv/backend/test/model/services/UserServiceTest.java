@@ -166,7 +166,7 @@ public class UserServiceTest {
 	@Test
 	public void testUpdateProfileWithNonExistentId() {
 		assertThrows(InstanceNotFoundException.class, () ->
-			userService.updateProfile(NON_EXISTENT_ID, "X", "X", "X"));
+			userService.updateProfile(NON_EXISTENT_ID, "X", "X", "X","X"));
 	}
 	
 	@Test
