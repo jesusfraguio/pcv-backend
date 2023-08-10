@@ -370,12 +370,12 @@ public class RepresentativeServiceImpl implements RepresentativeService {
         participationOpt.get().getVolunteer(), File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH);
     if (oldFile.isPresent()) {
       File newFile = oldFile.get();
-      Path path = Paths.get("./participations/certFiles/" + newFile.getId().toString() + "." +
+      Path path = Paths.get(basePath+"participations/certFiles/" + newFile.getId().toString() + "." +
           newFile.getExtension());
       fileDao.delete(newFile);
       try {
         Files.delete(path);
-      }catch (IOException e){
+      }catch (Exception e){
         //If there is no old file in disk because it was already deleted (low chances) app will keep going right
       }
     }
@@ -433,7 +433,7 @@ public class RepresentativeServiceImpl implements RepresentativeService {
       fileDao.delete(newFile);
       try {
         Files.delete(path);
-      }catch (IOException e){
+      }catch (Exception e){
         //If there is no old file in disk because it was already deleted (low chances) app will keep going right
       }
     }
@@ -479,11 +479,11 @@ public class RepresentativeServiceImpl implements RepresentativeService {
     if (oldFile.isPresent()) {
       File newFile = oldFile.get();
       Path path =
-          Paths.get("./users/dni/" + newFile.getId().toString() + "." + newFile.getExtension());
+          Paths.get(basePath+"users/dni/" + newFile.getId().toString() + "." + newFile.getExtension());
       fileDao.delete(newFile);
       try {
         Files.delete(path);
-      }catch (IOException e){
+      }catch (Exception e){
         //If there is no old file in disk because it was already deleted (low chances) app will keep going right
       }
     }
@@ -530,11 +530,11 @@ public class RepresentativeServiceImpl implements RepresentativeService {
     if (oldFile.isPresent()) {
       File newFile = oldFile.get();
       Path path =
-          Paths.get("./users/photo/" + newFile.getId().toString() + "." + newFile.getExtension());
+          Paths.get(basePath+"users/photo/" + newFile.getId().toString() + "." + newFile.getExtension());
       fileDao.delete(newFile);
       try {
         Files.delete(path);
-      }catch (IOException e){
+      }catch (Exception e){
         //If there is no old file in disk because it was already deleted (low chances) app will keep going right
       }
     }
@@ -754,18 +754,18 @@ public class RepresentativeServiceImpl implements RepresentativeService {
 
     switch (fileType) {
       case DNI:
-        return new java.io.File("./users/dni/" + file.getId() + "." + file.getExtension());
+        return new java.io.File(basePath+"users/dni/" + file.getId() + "." + file.getExtension());
       case HARASSMENT_CERT:
         return new java.io.File(
-            "./users/harassmentCert/" + file.getId() + "." + file.getExtension());
+            basePath+"users/harassmentCert/" + file.getId() + "." + file.getExtension());
       case PHOTO:
-        return new java.io.File("./users/photo/" + file.getId() + "." + file.getExtension());
+        return new java.io.File(basePath+"users/photo/" + file.getId() + "." + file.getExtension());
       case AGREEMENT_FILE:
-        return new java.io.File("./entities/certs/" + file.getId() + "." + file.getExtension());
+        return new java.io.File(basePath+"entities/certs/" + file.getId() + "." + file.getExtension());
       case AGREEMENT_FILE_SIGNED_BY_ENTITY:
       case AGREEMENT_FILE_SIGNED_BY_BOTH:
         return new java.io.File(
-            "./participations/certFiles/" + file.getId() + "." + file.getExtension());
+            basePath+"participations/certFiles/" + file.getId() + "." + file.getExtension());
       default:
         return null;
     }

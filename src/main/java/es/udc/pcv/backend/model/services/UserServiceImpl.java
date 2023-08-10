@@ -378,11 +378,11 @@ public class UserServiceImpl implements UserService {
 		Optional<File> oldFile = fileDao.findByVolunteerAndFileType(volunteer.get(), File.FileType.DNI);
 		if (oldFile.isPresent()) {
 			File newFile = oldFile.get();
-			Path path = Paths.get("./users/dni/" + newFile.getId().toString() + "." + newFile.getExtension());
+			Path path = Paths.get(basePath+"users/dni/" + newFile.getId().toString() + "." + newFile.getExtension());
 			fileDao.delete(newFile);
 			try {
 				Files.delete(path);
-			}catch (IOException e){
+			}catch (Exception e){
 				//If there is no old file in disk because it was already deleted (low chances) app will keep going right
 			}
 		}
@@ -416,11 +416,11 @@ public class UserServiceImpl implements UserService {
 		Optional<File> oldFile = fileDao.findByVolunteerAndFileType(volunteer.get(), File.FileType.HARASSMENT_CERT);
 		if (oldFile.isPresent()) {
 			File newFile = oldFile.get();
-			Path path = Paths.get("./users/harassmentCert/" + newFile.getId().toString() + "." + newFile.getExtension());
+			Path path = Paths.get(basePath+"users/harassmentCert/" + newFile.getId().toString() + "." + newFile.getExtension());
 			fileDao.delete(newFile);
 			try {
 				Files.delete(path);
-			}catch (IOException e){
+			}catch (Exception e){
 				//If there is no old file in disk because it was already deleted (low chances) app will keep going right
 			}
 		}
@@ -458,11 +458,11 @@ public class UserServiceImpl implements UserService {
 		Optional<File> oldFile = fileDao.findByEntidadAndVolunteerAndFileType(representative.get().getEntity(),volunteer.get(), File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH);
 		if (oldFile.isPresent()) {
 			File newFile = oldFile.get();
-			Path path = Paths.get("./participations/certFiles/" + newFile.getId().toString() + "." + newFile.getExtension());
+			Path path = Paths.get(basePath+"participations/certFiles/" + newFile.getId().toString() + "." + newFile.getExtension());
 			fileDao.delete(newFile);
 			try {
 				Files.delete(path);
-			}catch (IOException e){
+			}catch (Exception e){
 				//If there is no old file in disk because it was already deleted (low chances) app will keep going right
 			}
 		}

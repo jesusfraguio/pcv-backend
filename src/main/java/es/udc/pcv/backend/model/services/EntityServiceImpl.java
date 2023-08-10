@@ -83,7 +83,7 @@ public class EntityServiceImpl implements EntityService {
       fileDao.delete(oldFile);
       try {
         Files.delete(path);
-      }catch (IOException e){
+      }catch (Exception e){
         //If there is no old file in disk because it was already deleted (low chances) app will keep going right
       }
     }
@@ -120,7 +120,7 @@ public class EntityServiceImpl implements EntityService {
       fileDao.delete(oldFile);
       try {
         Files.delete(path);
-      }catch (IOException e){
+      }catch (Exception e){
         //If there is no old file in disk because it was already deleted (low chances) app will keep going right
       }
     }

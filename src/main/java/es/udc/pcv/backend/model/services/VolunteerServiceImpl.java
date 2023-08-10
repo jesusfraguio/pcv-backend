@@ -234,11 +234,11 @@ public class VolunteerServiceImpl implements VolunteerService {
     Optional<File> oldFile = fileDao.findByEntidadAndVolunteerAndFileType(participation.getProject().getEntity(), participation.getVolunteer(), File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH);
     if (oldFile.isPresent()) {
       File newFile = oldFile.get();
-      Path path = Paths.get("./participations/certFiles/" + newFile.getId().toString() + "." + newFile.getExtension());
+      Path path = Paths.get(basePath+"participations/certFiles/" + newFile.getId().toString() + "." + newFile.getExtension());
       fileDao.delete(newFile);
       try {
         Files.delete(path);
-      }catch (IOException e){
+      }catch (Exception e){
         //If there is no old file in disk because it was already deleted (low chances) app will keep going right
       }
     }
