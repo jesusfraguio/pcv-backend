@@ -14,6 +14,8 @@ public interface RegisteredHoursDao extends PagingAndSortingRepository<Registere
   List<RegisteredHours> findByParticipationProjectAndDateBetween(Project project, LocalDate startDate, LocalDate endDate);
   List<RegisteredHours> findByParticipationProjectEntityAndDateBetween(Entidad entidad, LocalDate startDate, LocalDate endDate);
 
-  @Query("SELECT SUM(r.hours) FROM RegisteredHours r WHERE r.participation = :participation AND r.date BETWEEN :startDate AND :endDate")
-  Integer sumRegisteredHoursByParticipationAndDateBetween(Participation participation, LocalDate startDate, LocalDate endDate);
+  @Query("SELECT SUM(r.hours) FROM RegisteredHours r WHERE r.participation = :participation " +
+      "AND r.date BETWEEN :startDate AND :endDate")
+  Integer sumRegisteredHoursByParticipationAndDateBetween(Participation participation,
+                                                          LocalDate startDate, LocalDate endDate);
 }

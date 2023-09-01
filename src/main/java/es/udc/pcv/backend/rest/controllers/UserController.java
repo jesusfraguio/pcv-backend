@@ -9,6 +9,7 @@ import es.udc.pcv.backend.model.exceptions.IncorrectLoginException;
 import es.udc.pcv.backend.model.exceptions.IncorrectPasswordException;
 import es.udc.pcv.backend.model.exceptions.InstanceNotFoundException;
 import es.udc.pcv.backend.model.exceptions.PermissionException;
+import es.udc.pcv.backend.model.exceptions.UnauthorizedException;
 import es.udc.pcv.backend.model.services.Block;
 import es.udc.pcv.backend.model.services.RepresentativeService;
 import es.udc.pcv.backend.model.services.UserService;
@@ -41,6 +42,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -108,8 +110,8 @@ public class UserController {
 		
 	}
 
-	@Operation(summary = "sign up")
-	@PostMapping("/signUp")
+	@Operation(summary = "sign up as volunteer")
+	@PostMapping("")
 	public ResponseEntity<AuthenticatedUserDto> signUp(
 		@Validated({UserDto.AllValidations.class}) @RequestBody UserDto userDto) throws DuplicateInstanceException {
 		
@@ -127,7 +129,7 @@ public class UserController {
 	}
 
 	@Operation(summary = "create a volunteer by a representative")
-	@RequestMapping(value = "/createVolunteer", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@RequestMapping(value = "/volunteer", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<Long> createVolunteer(@RequestAttribute Long userId,
 			@RequestParam String volunteerDataDto, @RequestPart(name="dni",required = false)
 			MultipartFile dni, @RequestPart(name="harassmentCert",required = false) MultipartFile harassmentCert,
@@ -152,8 +154,8 @@ public class UserController {
 
 	}
 
-	@Operation(summary = "representative might update any volunteer doc")
-	@RequestMapping(value = "/representative/updateVolunteerDoc/{id}", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Operation(summary = "representative might upload any volunteer doc")
+	@RequestMapping(value = "{id}/representative/volunteerDoc", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<Boolean> updateMyVolunteer(@RequestAttribute Long userId, @PathVariable Long id,
 													 @RequestPart(name="dni",required = false) MultipartFile dni,
 													 @RequestPart(name="harassmentCert",required = false) MultipartFile harassmentCert,
@@ -179,7 +181,7 @@ public class UserController {
 	}
 
 	@Operation(summary = "representative might download any volunteer doc",description = "Request param fileType (string) is required with one of the next values: HARASSMENT_CERT, DNI, AGREEMENT_FILE_SIGNED_BY_BOTH, PHOTO")
-	@GetMapping(value = "/representative/downloadVolunteerDoc/{id}")
+	@GetMapping(value = "/{id}/representative/volunteerDoc")
 	public ResponseEntity<Resource> downloadVolunteerFile(@RequestAttribute Long userId, @PathVariable Long id, @RequestParam(name = "fileType") String fileType)
 		throws InstanceNotFoundException {
 
@@ -248,7 +250,7 @@ public class UserController {
 		
 	}
 	@Operation(summary = "updates volunteer's data that are collaborating with my entity")
-	@PutMapping("/myVolunteer/{id}")
+	@PutMapping("/{id}/volunteer")
 	public UserDto updateVolunteerProfile(@RequestAttribute Long userId, @PathVariable Long id,
 								 @Validated({UserDto.UpdateValidations.class}) @RequestBody UserDto userDto)
 			throws InstanceNotFoundException, PermissionException, DuplicateInstanceException {
@@ -257,8 +259,8 @@ public class UserController {
 		return userConversor.toUserDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer());
 
 	}
-	@Operation(summary = "Update my certificate file (user)")
-	@RequestMapping(value = "/update-my-doc/{id}", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Operation(summary = "Uploads a new doc file of volunteer (user)")
+	@RequestMapping(value = "/{id}/volunteerDoc", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public boolean addCertFile(@RequestAttribute Long userId, @PathVariable Long id, @RequestPart(name="dni",required = false)
 									   MultipartFile dni, @RequestPart(name="harassmentCert", required = false)
 										   MultipartFile harassment)
@@ -287,7 +289,7 @@ public class UserController {
 	}
 
 	@Operation(summary = "gets full volunteer's data susceptible of being modified")
-	@GetMapping("/myVolunteer/{id}")
+	@GetMapping("/{id}/volunteer")
 	public UserDto getUserFullProfile(@RequestAttribute Long userId, @PathVariable Long id) throws InstanceNotFoundException{
 		UserWithVolunteer userWithVolunteer = userService.getSummaryProfile(userId,id);
 		return userConversor.toUserFullDto(userWithVolunteer.getUser(),userWithVolunteer.getVolunteer());
@@ -318,28 +320,37 @@ public class UserController {
 		userService.changePassword(id, params.getOldPassword(), params.getNewPassword());
 		
 	}
+
+	@ExceptionHandler(UnauthorizedException.class)
+	public ResponseEntity<Void> handleUnauthorizedException() {
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+	}
+
 	@PostMapping("/newPasswordByTemporallyToken")
 	public AuthenticatedUserDto createPasswordByToken(@RequestAttribute Long userId, @Validated @RequestBody
 			NewPasswordParamsDto params)
 			throws InstanceNotFoundException {
-
+		if (userService.checkIfUserIsDeleted(userId)) {
+			throw new UnauthorizedException();
+		}
 		User user = userService.addNewPassword(userId,params.getNewPassword());
 
 		return userConversor.toAuthenticatedUserDto(generateServiceToken(user), user);
 
 	}
+
 	@Operation(summary = "sends e-mail with recovery token if it is registered")
 	@PostMapping("/sendRecoveryEmail")
-	public boolean sendRecoverEmail(
-			@RequestBody @Validated EmailDto emailDto) {
-
-		return userService.findByEmail(emailDto.getEmail())
-				.map(user -> {
-					String token = generateServiceToken(user);
-					userService.sendEmailWithToken(user, token);
-					return true;
-				})
-				.orElse(true); // for security measures to don't leak if an email is registered, true is returned as well
+	public boolean sendRecoverEmail( @RequestBody @Validated EmailDto emailDto) {
+		userService.findByEmail(emailDto.getEmail()).map(user -> {
+			if (userService.checkIfUserIsDeleted(user.getId())) {
+				return true;
+			}
+			String token = generateServiceToken(user);
+			userService.sendEmailWithToken(user, token);
+			return true;
+		});
+		return true; // for security measures to don't leak if an email is registered, true is returned as well
 	//TODO If you want that the most advanced hacker don't know if an account exists an async thread should be opened because of time sending email requires
 	}
 

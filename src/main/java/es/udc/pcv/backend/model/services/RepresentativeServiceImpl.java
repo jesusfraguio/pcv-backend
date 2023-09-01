@@ -331,8 +331,8 @@ public class RepresentativeServiceImpl implements RepresentativeService {
     String[] allowedSortColumns = {"state", "volunteerSurname", "volunteerName", "totalHours"};
 
     Pageable pageable = pageableDtoToPageable(pageableDto, allowedSortColumns);
-    Page<Participation> participationPage = participationDao.findAllByProjectId(
-        projectId, pageable);
+    Page<Participation> participationPage = participationDao.findAllByProjectIdAndStateNot(
+        projectId, Participation.ParticipationState.PENDING, pageable);
 
     return new Block<>(participationPage.getContent(), participationPage.hasNext());
   }
@@ -703,6 +703,25 @@ public class RepresentativeServiceImpl implements RepresentativeService {
   }
 
   @Override
+  public boolean deleteProject(Long representativeId, Long projectId)
+      throws InstanceNotFoundException, PermissionException {
+    Optional<Representative> representative = representativeDao.findById(representativeId);
+    if (!representative.isPresent()) {
+      throw new InstanceNotFoundException("project.entities.representative", representativeId);
+    }
+    Optional<Project> project = projectDao.findById(projectId);
+    if(!project.isPresent()){
+      throw new InstanceNotFoundException("project.entities.project", projectId);
+    }
+    if(project.get().getEntity().getId() != representative.get().getEntity().getId()){
+      throw new PermissionException();
+    }
+    project.get().setVisible(false);
+    project.get().setDeleted(true);
+    return true;
+  }
+
+  @Override
   public List<HourVolunteerDto> getTotalHours(Long representativeId, Integer year, Long projectId,
                                               List<Long> volunteerIds)
       throws InstanceNotFoundException {
@@ -711,15 +730,19 @@ public class RepresentativeServiceImpl implements RepresentativeService {
       throw new InstanceNotFoundException("project.entities.representative", representativeId);
     }
     List<HourVolunteerDto> returnList = new ArrayList<>();
-    if(projectId!=null){
+    if (projectId != null) {
       for (Long volunteerId : volunteerIds) {
-        Optional<Participation> participation = participationDao.findByProjectIdAndVolunteerId(projectId,volunteerId);
-        if(!participation.isPresent() || (participation.get().getProject().getEntity() != representative.get().getEntity())) {
+        Optional<Participation> participation =
+            participationDao.findByProjectIdAndVolunteerId(projectId, volunteerId);
+        if (!participation.isPresent() ||
+            (participation.get().getProject().getEntity() != representative.get().getEntity())) {
           throw new InstanceNotFoundException("project.entities.volunteer",
               volunteerId);
         }
-        returnList.add(new HourVolunteerDto(volunteerId,registeredHoursDao.sumRegisteredHoursByParticipationAndDateBetween(participation.get(),
-            LocalDate.of(year,1,1),LocalDate.of(year,12,31))));
+        returnList.add(new HourVolunteerDto(volunteerId,
+            registeredHoursDao.sumRegisteredHoursByParticipationAndDateBetween(
+                participation.get(),
+                LocalDate.of(year, 1, 1), LocalDate.of(year, 12, 31))));
       }
     }
     return returnList;

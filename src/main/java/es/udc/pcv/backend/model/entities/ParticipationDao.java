@@ -12,7 +12,7 @@ public interface ParticipationDao extends PagingAndSortingRepository<Participati
   List<Participation> findByProjectId(Long projectId);
   Page<Participation> findAllByProjectEntityId(Long entityId, Pageable pageable);
   Page<Participation> findAllByProjectEntityIdAndState(Long entityId, Participation.ParticipationState state, Pageable pageable);
-  Page<Participation> findAllByProjectId(Long projectId, Pageable pageable);
+  Page<Participation> findAllByProjectIdAndStateNot(Long projectId, Participation.ParticipationState state, Pageable pageable);
   Page<Participation> findAllByProjectIdAndState(Long projectId, Participation.ParticipationState state, Pageable pageable);
   Page<Participation> findAllByVolunteerId(Long volunteerId, Pageable pageable);
   Page<Participation> findAllByProjectEntity(Entidad entidad, Pageable pageable);

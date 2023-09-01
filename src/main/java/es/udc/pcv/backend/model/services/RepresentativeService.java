@@ -57,6 +57,8 @@ public interface RepresentativeService {
       throws InstanceNotFoundException, ParticipationIsInDateException;
   boolean deleteHourRegister(Long representativeId, Long hourRegisterId)
       throws InstanceNotFoundException;
+  boolean deleteProject(Long representativeId, Long projectId)
+      throws InstanceNotFoundException, PermissionException;
   List<HourVolunteerDto> getTotalHours(Long representativeId, Integer year, Long projectId, List<Long> volunteerId)
       throws InstanceNotFoundException;
 }

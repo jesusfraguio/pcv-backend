@@ -21,7 +21,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import javax.validation.ValidationException;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +47,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/participation")
-@Tag(name = "participations")
+@Tag(name = "participation")
 public class ParticipationController {
 
   @Autowired
@@ -93,7 +96,7 @@ public class ParticipationController {
   }
 
   @Operation(summary = "get all user participation with their names of a project")
-  @GetMapping("/getAllProjectParticipations/{projectId}")
+  @GetMapping("/projects/{projectId}")
   public Block<ParticipationWithUserDto> getAllProjectParticipations(@RequestAttribute long userId, @PathVariable Long projectId,
                                                                      @RequestParam(defaultValue = "0") int page,
                                                                      @RequestParam(defaultValue = "10") int size,
@@ -104,8 +107,8 @@ public class ParticipationController {
     return participationConversor.toParticipationWithUserBlockDto(
         representativeService.findAllProjectParticipation(userId,projectId,pageableDto));
   }
-  @Operation(summary = "Update my certificate file (user)")
-  @RequestMapping(value = "/addCertFile", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @Operation(summary = "Creates a new certificate file (user)")
+  @RequestMapping(value = "/certFiles", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public boolean addCertFile( @RequestAttribute long userId,
       @RequestParam String participationNumber, @RequestPart(name="cert",required = true)
       MultipartFile cert)
@@ -120,8 +123,8 @@ public class ParticipationController {
     return true;
 
   }
-  @Operation(summary = "Update entity's volunteer certificate file")
-  @RequestMapping(value = "/representative/addCertFile", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @Operation(summary = "Creates entity's volunteer certificate file")
+  @RequestMapping(value = "/certFiles/representative", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public boolean addVolunteerCertFile(@RequestAttribute long userId,
                               @RequestParam String participationNumber, @RequestPart(name="cert",required = true)
                                   MultipartFile cert)
@@ -136,27 +139,27 @@ public class ParticipationController {
 
   }
   @Operation(summary = "Get a list with all entity's projects (id,name)")
-  @GetMapping(value = "/all-my-projects")
+  @GetMapping(value = "/projects")
   public List<SelectorDataDto> getAllMyProjects(@RequestAttribute Long userId)
       throws InstanceNotFoundException {
     return representativeService.findAllMyEntityProjects(userId);
   }
   @Operation(summary = "Get a list with all project's participations (id,name)")
-  @GetMapping(value = "/project/{projectId}/participation")
+  @GetMapping(value = "/projects/{projectId}/participation")
   public List<SelectorDataDto> getAllMyProjectParticipations(@RequestAttribute Long userId, @PathVariable Long projectId)
       throws InstanceNotFoundException, PermissionException {
     return representativeService.findAllProjectParticipations(userId,projectId);
   }
 
   @Operation(summary = "Creates a new hour register  participation")
-  @PostMapping(value = "/createHourRegister")
+  @PostMapping(value = "/hourRegisters")
   public RegisteredHoursDto createHourRegister(@RequestAttribute Long userId, @Validated @RequestBody
       RegisteredHoursDto registeredHoursDto)
       throws InstanceNotFoundException, ParticipationIsInDateException {
     return participationConversor.toRegisteredHoursDto(representativeService.createHourRegister(userId, registeredHoursDto));
   }
   @Operation(summary = "Gets all participation's hours register of my entity between two dates and a project (optional)")
-  @GetMapping(value = "/getAllRegisteredHours")
+  @GetMapping(value = "/hourRegisters")
   public List<RegisteredHoursDto> getAllRegisteredHours(@RequestAttribute Long userId,
                                                         @RequestParam(required = false) Long projectId,
                                                         @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") String startDate,
@@ -166,18 +169,24 @@ public class ParticipationController {
         projectId,LocalDate.parse(startDate),LocalDate.parse(endDate)));
   }
   @Operation(summary = "Deletes one hour register participation")
-  @DeleteMapping(value = "/hourRegister/{hourRegisterId}")
+  @DeleteMapping(value = "/hourRegisters/{hourRegisterId}")
   public boolean deleteHourRegister(@RequestAttribute Long userId, @PathVariable Long hourRegisterId)
       throws InstanceNotFoundException {
     return representativeService.deleteHourRegister(userId,hourRegisterId);
   }
 
   @Operation(summary = "Gets total hours each volunteer has done in a project of a certain year(1st January - 31th December)")
-  @PostMapping(value="/totalHours/{year}")
-  public List<HourVolunteerDto> getTotalHours(@RequestAttribute Long userId, @PathVariable Integer year,
-                                              @RequestParam(required = true) Long projectId,
-                                              @Validated @RequestBody @NotNull @Size(max=20) List<Long> volunteerList)
+  @GetMapping(value="/projects/{projectId}/totalHours/{year}")
+  public List<HourVolunteerDto> getTotalHours(@RequestAttribute Long userId, @PathVariable Long projectId,
+                                              @PathVariable Integer year,
+                                              @RequestParam String volunteerIds)
       throws InstanceNotFoundException {
+    List<Long> volunteerList = Arrays.stream(volunteerIds.split(","))
+        .map(Long::valueOf)
+        .collect(Collectors.toList());
+    if(volunteerList.size()<=0 || volunteerList.size()>20){
+      throw new ValidationException();
+    }
     return representativeService.getTotalHours(userId,year,projectId,volunteerList);
   }
 }

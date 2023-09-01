@@ -34,6 +34,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -86,8 +87,8 @@ public class AdminController {
   }
 
 
-  @Operation(summary = "create representative")
-  @PostMapping("/createRepresentative")
+  @Operation(summary = "create a representative")
+  @PostMapping("/representatives")
   public ResponseEntity<MessageDTO> createRepresentative(
       @Validated({RepresentativeDto.AllValidations.class}) @RequestBody RepresentativeDto representativeDto)
       throws
@@ -105,19 +106,19 @@ public class AdminController {
 
   }
 
-  @GetMapping("/getEntities")
+  @GetMapping("/entities")
   public Block<EntityDto> getEntities(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
     Block<Entidad> entidadBlock = adminService.getEntities(page,size);
     return new Block<>(entityConversor.toEntityListDto(entidadBlock.getItems()),entidadBlock.getExistMoreItems());
   }
 
-  @GetMapping("/getMyEntity")
+  @GetMapping("/entities/getMyEntity")
   public EntityDto getMyEntity(@RequestAttribute long userId){
     return entityConversor.toEntityDto(representativeService.getMyEntity(userId));
   }
 
-  @Operation(summary = "create representative")
-  @RequestMapping(value = "/createEntity", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @Operation(summary = "creates an entity")
+  @RequestMapping(value = "/entities", method = RequestMethod.POST,  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public EntityDto createEntity(
     @RequestParam String entityDto, @RequestPart(name="cert",required = false)
       MultipartFile cert, @RequestPart(name="logo",required = false) MultipartFile logo)
@@ -141,9 +142,23 @@ public class AdminController {
   }
 
   @Operation(summary = "updates a project with a new ods list")
-  @PatchMapping(value = "/update/project/{projectId}/ods")
+  @PatchMapping(value = "/projects/{projectId}/ods")
   public boolean updateProjectOds(@PathVariable Long projectId, @RequestBody @NotEmpty List<Long> ods){
     return adminService.updateProjectOds(projectId,ods);
+  }
+
+  @Operation(summary = "Performs a logical deletion of a volunteer or a real deletion of a representative")
+  @DeleteMapping(value = "/users/{id}")
+  public boolean deleteUser(@PathVariable Long id)
+      throws InstanceNotFoundException {
+    return userService.deleteUser(id);
+  }
+
+  @Operation(summary = "Performs a logical deletion of a volunteer by its DNI")
+  @DeleteMapping(value = "/users")
+  public boolean deleteUserByDNI(@RequestParam String dni)
+      throws InstanceNotFoundException {
+    return userService.deleteVolunteerByDNI(dni);
   }
 
 }

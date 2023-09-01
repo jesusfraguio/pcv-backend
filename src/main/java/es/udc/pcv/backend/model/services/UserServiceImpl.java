@@ -84,6 +84,9 @@ public class UserServiceImpl implements UserService {
 	@Value("${file.base-path}")
 	private String basePath;
 
+	@Value("${project.web.url}")
+	private String frontUrl;
+
 	private static final SecureRandom RANDOM = new SecureRandom();
 
 	@Override
@@ -124,21 +127,65 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
+	public boolean deleteUser(Long userId) throws InstanceNotFoundException {
+		Optional<User> user = userDao.findById(userId);
+		if(!user.isPresent()){
+			throw new InstanceNotFoundException("project.entities.user", userId);
+		}
+		if(user.get().getRole().equals(User.RoleType.USER)){
+			Optional<Volunteer> volunteer = volunteerDao.findByUserId(userId);
+			if(!volunteer.isPresent()){
+				throw new InstanceNotFoundException("project.entities.user", userId);
+			}
+			else{
+				if(volunteer.get().isDeleted()){
+					return false;
+				}
+				volunteer.get().setDeleted(true);
+				return true;
+			}
+		}
+		else if(user.get().getRole().equals(User.RoleType.REPRESENTATIVE)){
+			userDao.delete(user.get());
+			return true;
+		}
+		else{
+			//for security reasons administrators cannot be deleted by another administrators
+			return false;
+		}
+	}
+
+	@Override
+	public boolean deleteVolunteerByDNI(String DNI) throws InstanceNotFoundException {
+		Optional<Volunteer> volunteer = volunteerDao.findByDni(DNI);
+		if(!volunteer.isPresent()){
+			throw new InstanceNotFoundException("project.entities.volunteer", DNI);
+		}
+		if(volunteer.get().isDeleted()){
+			return false;
+		}
+		volunteer.get().setDeleted(true);
+		return true;
+	}
+
+	@Override
 	@Transactional(readOnly=true)
 	public User login(String email, String password) throws IncorrectLoginException {
 
 		Optional<User> user = userDao.findByEmail(email);
-		
+
 		if (!user.isPresent()) {
 			throw new IncorrectLoginException(email, password);
 		}
-		
 		if (!passwordEncoder.matches(password, user.get().getPassword())) {
 			throw new IncorrectLoginException(email, password);
 		}
 
+		if(checkIfUserIsDeleted(user.get().getId())){
+			throw new IncorrectLoginException(email, password);
+		}
+
 		return user.get();
-		
 	}
 	
 	@Override
@@ -209,7 +256,9 @@ public class UserServiceImpl implements UserService {
 				File.FileType.AGREEMENT_FILE_SIGNED_BY_BOTH, representative.get().getEntity())){
 			throw new PermissionException();
 		}
-		if (newUserData.getEmail()!=null && userDao.existsByEmail(newUserData.getEmail())) {
+		if (newUserData.getEmail()!=null && userDao.existsByEmail(newUserData.getEmail()) &&
+				!Objects.equals(newUserData.getEmail(), volunteer.get().getUser().getEmail())) {
+			//there is another account with that email!
 			throw new DuplicateInstanceException("project.entities.user", newUserData.getEmail());
 		}
 		if(volunteer.get().getUser()==null && newUserData.getEmail()!=null){
@@ -251,20 +300,22 @@ public class UserServiceImpl implements UserService {
 			throws DuplicateInstanceException, InstanceNotFoundException {
 
 		if (userDao.existsByEmail(userWithRepresentative.getEmail())) {
-			throw new DuplicateInstanceException("project.entities.user", userWithRepresentative.getEmail());
+			throw new DuplicateInstanceException("project.entities.user",
+					userWithRepresentative.getEmail());
 		}
+		Entidad entity = entityDao.findById(
+				userWithRepresentative.getEntityId()).orElseThrow(()
+				-> new InstanceNotFoundException("project.entities.entity",
+				userWithRepresentative.getEntityId()));
 
-		if (!entityDao.existsById(userWithRepresentative.getEntityId())){
-			throw new InstanceNotFoundException("project.entities.entidad",userWithRepresentative.getEntityId());
-		}
 		String randomPassword = generateRandomPassword();
-		User user = new User(randomPassword,userWithRepresentative.getEmail());
+		User user = new User(randomPassword, userWithRepresentative.getEmail());
 		user.setPassword(passwordEncoder.encode(user.getPassword()));
 		user.setRole(User.RoleType.REPRESENTATIVE);
 
-		Representative representative = new Representative(user,userWithRepresentative.getName(),
-				userWithRepresentative.getSurname(),userWithRepresentative.getPhone(),entityDao.findById(
-				userWithRepresentative.getEntityId()).get());
+		Representative representative = new Representative(user, userWithRepresentative.getName(),
+				userWithRepresentative.getSurname(), userWithRepresentative.getPhone(),
+				entity);
 		return representativeDao.save(representative);
 	}
 
@@ -272,7 +323,7 @@ public class UserServiceImpl implements UserService {
 	public void sendEmailWithToken(User user, String token) {
 		SimpleMailMessage message = new SimpleMailMessage();
 		message.setFrom(originEmail);
-		String fullPath = "https://pcv-front.onrender.com/users/validate/registerToken/"+token;
+		String fullPath = frontUrl+"users/validate/registerToken/"+token;
 		String bodyMessage = "Para darse de alta en Plataforma Coruñesa De Voluntariado introduzca una nueva contraseña en el siguiente enlace.\n"+
 				"Este enlace tendrá una validez de 1 hora.\n"+fullPath+"\n" +
 				"Si ha recibido por error este mensaje ignórelo por favor";
@@ -472,6 +523,16 @@ public class UserServiceImpl implements UserService {
 
 	}
 
+	@Override
+	public boolean checkIfUserIsDeleted(Long userId){
+		Optional<User> user = userDao.findById(userId);
+		if(!user.isPresent()) return true;
+		if(user.get().getRole().equals(User.RoleType.USER)){
+			return volunteerDao.findByUserId(user.get().getId()).map(Volunteer::isDeleted).orElse(true);
+		}
+		return false;
+	}
+
 	private Volunteer updateVolunteer(Volunteer updatedVolunteer, Volunteer existingEntity) {
 		if (existingEntity != null && updatedVolunteer != null) {
 			if (updatedVolunteer.getName() != null) {
@@ -501,8 +562,8 @@ public class UserServiceImpl implements UserService {
 
 	private String generateRandomPassword(){
 		StringBuilder sb = new StringBuilder(10);
-		for (int i = 0; i < 10; i++) {
-			char randomChar = (char) (RANDOM.nextInt(95) + 32); //contraseña con caracteres printeables ASCII 32-126
+		for (int i = 0; i < 10; i++) {	//contraseña con caracteres printeables ASCII 32-126
+			char randomChar = (char) (RANDOM.nextInt(95) + 32);
 			sb.append(randomChar);
 		}
 		return sb.toString();

@@ -22,6 +22,10 @@ public interface UserService {
 	void signUp(UserWithVolunteer userWithVolunteer) throws DuplicateInstanceException;
 
 	Volunteer createVolunteer(Long representativeId, Volunteer volunteer, MultipartFile cert) throws InstanceNotFoundException, IOException;
+
+	boolean deleteUser(Long userId) throws InstanceNotFoundException;
+
+	boolean deleteVolunteerByDNI(String DNI) throws InstanceNotFoundException;
 	
 	User login(String userName, String password) throws IncorrectLoginException;
 	
@@ -40,6 +44,8 @@ public interface UserService {
         throws DuplicateInstanceException, InstanceNotFoundException;
 
 	void sendEmailWithToken(User user, String token);
+
+	boolean checkIfUserIsDeleted(Long userId);
 
 	Optional<User> findByEmail(String email);
 

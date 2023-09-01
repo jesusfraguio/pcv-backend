@@ -21,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -30,8 +31,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/entity")
-@Tag(name = "entity")
+@RequestMapping("/entities")
+@Tag(name = "entities")
 public class EntityController {
 
   @Autowired
@@ -47,10 +48,10 @@ public class EntityController {
   private EntityConversor entityConversor;
 
   @Operation(summary = "get the image(logo) of an entity")
-  @GetMapping("/getLogo")
-  public ResponseEntity<Resource> getLogo(@RequestParam Long entityId)
+  @GetMapping("/{id}/getLogo")
+  public ResponseEntity<Resource> getLogo(@PathVariable Long id)
       throws InstanceNotFoundException {
-    ResourceWithType resource = representativeService.getLogo(entityId);
+    ResourceWithType resource = representativeService.getLogo(id);
     MediaType mediaType;
     if (resource.getExtension().equals("png")) {
       mediaType = MediaType.IMAGE_PNG;
@@ -65,7 +66,7 @@ public class EntityController {
   }
 
   @Operation(summary = "get an entity's agreement file (only logged users)")
-  @GetMapping("/getAgreementFile/{id}")
+  @GetMapping("/{id}/getAgreementFile")
   public ResponseEntity<Resource> getAgreementFile(@RequestAttribute Long userId,
                                                    @PathVariable Long id)
       throws InstanceNotFoundException {
@@ -82,13 +83,13 @@ public class EntityController {
   }
 
   @Operation(summary = "gets all entity's info")
-  @GetMapping("/entity/{id}")
+  @GetMapping("/{id}")
   public EntityDto getEntity(@PathVariable Long id) throws InstanceNotFoundException {
     return entityConversor.toEntityDto(entityService.getEntity(id));
   }
 
-  @Operation(summary = "updates an entity")
-  @RequestMapping(value = "/updateEntity/{entityId}", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @Operation(summary = "allows upload new entity files and also update an entity")
+  @RequestMapping(value = "/{entityId}/update", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public EntityDto updateEntity(@RequestAttribute Long userId, @PathVariable Long entityId,
                                 @RequestParam String entityDto,
                                 @RequestPart(name = "logo", required = false) MultipartFile logo,

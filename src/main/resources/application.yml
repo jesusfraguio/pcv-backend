@@ -40,6 +40,8 @@ spring:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
 project:
+  web:
+    url: '@frontend.url@'
   jwt:
     signKey: '@jwt.signKey@'
     expirationMinutes: 1440
