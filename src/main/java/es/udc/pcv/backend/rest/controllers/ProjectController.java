@@ -85,7 +85,7 @@ public class ProjectController {
 
   }
   @Operation(summary = "get a list of ods and areas")
-  @GetMapping("/getSummaryOdsAndCollaborationArea")
+  @GetMapping("/summaryOdsAndCollaborationArea")
   public OdsWithCollaborationAreaDto getSummaryOdsAndAreas(){
     OdsWithCollaborationAreaDto ret = new OdsWithCollaborationAreaDto();
     ret.setOdsSummary(entityConversor.toOdsSummaryDto(representativeService.getAllOds()));
@@ -96,7 +96,7 @@ public class ProjectController {
 
 
   @Operation(summary = "get a block of projects(without images for performance)")
-  @GetMapping("/searchProjectsBy")
+  @GetMapping("")
   public Block<ProjectSummaryDto> searchProjectsBy(@RequestParam(required = false) String name,
                                                    @RequestParam(required = false) String locality,
                                                    @RequestParam(required = false) Long collaborationAreaId,

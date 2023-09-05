@@ -257,7 +257,7 @@ public class UserServiceImpl implements UserService {
 			throw new PermissionException();
 		}
 		if (newUserData.getEmail()!=null && userDao.existsByEmail(newUserData.getEmail()) &&
-				!Objects.equals(newUserData.getEmail(), volunteer.get().getUser().getEmail())) {
+				(volunteer.get().getUser()==null || !Objects.equals(newUserData.getEmail(), volunteer.get().getUser().getEmail()))) {
 			//there is another account with that email!
 			throw new DuplicateInstanceException("project.entities.user", newUserData.getEmail());
 		}

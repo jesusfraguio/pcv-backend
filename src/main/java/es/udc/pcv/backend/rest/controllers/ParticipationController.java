@@ -83,8 +83,8 @@ public class ParticipationController {
     return participationConversor.toParticipationWithUserDto(volunteerService.updateParticipation(userId,id,participationData));
   }
 
-  @Operation(summary = "get all pending users participations")
-  @GetMapping("/getAllPendingParticipations")
+  @Operation(summary = "get a block of pending users participations")
+  @GetMapping("/pendingParticipation")
   public Block<ParticipationWithUserDto> getAllPending(@RequestAttribute long userId, @RequestParam(defaultValue = "0") int page,
                                                        @RequestParam(defaultValue = "10") int size,
                                                        @RequestParam(required = false) String sortValue,

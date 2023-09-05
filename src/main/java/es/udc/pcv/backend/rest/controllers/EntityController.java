@@ -48,7 +48,7 @@ public class EntityController {
   private EntityConversor entityConversor;
 
   @Operation(summary = "get the image(logo) of an entity")
-  @GetMapping("/{id}/getLogo")
+  @GetMapping("/{id}/logo")
   public ResponseEntity<Resource> getLogo(@PathVariable Long id)
       throws InstanceNotFoundException {
     ResourceWithType resource = representativeService.getLogo(id);
@@ -66,7 +66,7 @@ public class EntityController {
   }
 
   @Operation(summary = "get an entity's agreement file (only logged users)")
-  @GetMapping("/{id}/getAgreementFile")
+  @GetMapping("/{id}/agreementFile")
   public ResponseEntity<Resource> getAgreementFile(@RequestAttribute Long userId,
                                                    @PathVariable Long id)
       throws InstanceNotFoundException {
@@ -112,8 +112,8 @@ public class EntityController {
 
   }
 
-  @Operation(summary = "gets a list with entity's name and id")
-  @GetMapping(value = "/getAllEntitiesSelector")
+  @Operation(summary = "gets a list with all entity's name and id")
+  @GetMapping(value = "/entitiesSelector")
   Block<SelectorDataDto> getAllEntitiesSelector(@RequestParam(defaultValue = "0") int page,
                                                 @RequestParam(defaultValue = "500") int size,
                                                 @RequestParam(required = false) String sortValue,

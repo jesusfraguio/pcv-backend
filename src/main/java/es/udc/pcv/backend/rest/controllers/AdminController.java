@@ -112,7 +112,7 @@ public class AdminController {
     return new Block<>(entityConversor.toEntityListDto(entidadBlock.getItems()),entidadBlock.getExistMoreItems());
   }
 
-  @GetMapping("/entities/getMyEntity")
+  @GetMapping("/entities/myEntity")
   public EntityDto getMyEntity(@RequestAttribute long userId){
     return entityConversor.toEntityDto(representativeService.getMyEntity(userId));
   }

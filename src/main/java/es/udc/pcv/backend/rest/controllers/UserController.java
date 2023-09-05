@@ -296,7 +296,7 @@ public class UserController {
 	}
 
 	@Operation(summary = "Get a block of entity's volunteers")
-	@GetMapping("/representative/findMyVolunteers")
+	@GetMapping("/representative/myVolunteers")
 	public Block<VolunteerSummaryDto> findMyVolunteers(@RequestAttribute Long userId,
 													   @RequestParam(defaultValue = "0") int page,
 													   @RequestParam(defaultValue = "10") int size,
@@ -307,7 +307,7 @@ public class UserController {
 		return userConversor.toVolunteerSummaryBlockDto(representativeService.findMyEntityVolunteers(userId,pageableDto));
 	}
 	
-	@PostMapping("/{id}/changePassword")
+	@PostMapping("/{id}/password")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void changePassword(@RequestAttribute Long userId, @PathVariable Long id,
 		@Validated @RequestBody ChangePasswordParamsDto params)
@@ -340,7 +340,7 @@ public class UserController {
 	}
 
 	@Operation(summary = "sends e-mail with recovery token if it is registered")
-	@PostMapping("/sendRecoveryEmail")
+	@PostMapping("/recoveryEmail")
 	public boolean sendRecoverEmail( @RequestBody @Validated EmailDto emailDto) {
 		userService.findByEmail(emailDto.getEmail()).map(user -> {
 			if (userService.checkIfUserIsDeleted(user.getId())) {
