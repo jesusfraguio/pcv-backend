@@ -82,7 +82,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers(HttpMethod.GET,"/users/*/representative/volunteerDoc").hasAnyRole("ADMIN","REPRESENTATIVE")
 			.antMatchers(HttpMethod.POST,"/users/volunteer").hasAnyRole("ADMIN","REPRESENTATIVE")
 			.antMatchers(HttpMethod.GET, "/users/representative/myVolunteers").hasAnyRole("ADMIN","REPRESENTATIVE")
-			.anyRequest().permitAll(); // permitAll allows OpenAPI generated docs access
+			.anyRequest().denyAll(); // permitAll allows OpenAPI generated docs access
 
 	}
 	
